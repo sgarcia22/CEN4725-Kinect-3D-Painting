@@ -62,16 +62,18 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\BodySourceManager.cs" />
-    <Compile Include="Assets\Scripts\BodySourceView.cs" />
-    <Compile Include="Assets\Scripts\ColorSourceManager.cs" />
-    <Compile Include="Assets\Scripts\ColorSourceView.cs" />
-    <Compile Include="Assets\Scripts\DepthSourceManager.cs" />
-    <Compile Include="Assets\Scripts\DepthSourceView.cs" />
-    <Compile Include="Assets\Scripts\DisableOnStart.cs" />
-    <Compile Include="Assets\Scripts\InfraredSourceManager.cs" />
-    <Compile Include="Assets\Scripts\InfraredSourceView.cs" />
-    <Compile Include="Assets\Scripts\MultiSourceManager.cs" />
+    <Compile Include="Assets\Scripts\Drawing.cs" />
+    <Compile Include="Assets\Scripts\Erase.cs" />
+    <Compile Include="Assets\Scripts\Kinect\BodySourceManager.cs" />
+    <Compile Include="Assets\Scripts\Kinect\BodySourceView.cs" />
+    <Compile Include="Assets\Scripts\Kinect\ColorSourceManager.cs" />
+    <Compile Include="Assets\Scripts\Kinect\ColorSourceView.cs" />
+    <Compile Include="Assets\Scripts\Kinect\DepthSourceManager.cs" />
+    <Compile Include="Assets\Scripts\Kinect\DepthSourceView.cs" />
+    <Compile Include="Assets\Scripts\Kinect\DisableOnStart.cs" />
+    <Compile Include="Assets\Scripts\Kinect\InfraredSourceManager.cs" />
+    <Compile Include="Assets\Scripts\Kinect\InfraredSourceView.cs" />
+    <Compile Include="Assets\Scripts\Kinect\MultiSourceManager.cs" />
     <Reference Include="Unity.Timeline.Editor">
       <HintPath>C:/Users/samyg/OneDrive/Desktop/Spring2020/CEN/GroupProject/CEN4725-Kinect-3D-Painting/Kinect-3D-Drawing/Library/ScriptAssemblies/Unity.Timeline.Editor.dll</HintPath>
     </Reference>
