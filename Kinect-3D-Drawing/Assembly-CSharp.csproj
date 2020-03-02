@@ -64,6 +64,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Drawing.cs" />
     <Compile Include="Assets\Scripts\Erase.cs" />
+    <Compile Include="Assets\Scripts\GameManager.cs" />
     <Compile Include="Assets\Scripts\Kinect\BodySourceManager.cs" />
     <Compile Include="Assets\Scripts\Kinect\BodySourceView.cs" />
     <Compile Include="Assets\Scripts\Kinect\ColorSourceManager.cs" />
