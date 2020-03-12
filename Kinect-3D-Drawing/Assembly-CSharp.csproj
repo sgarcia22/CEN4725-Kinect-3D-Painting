@@ -75,6 +75,7 @@
     <Compile Include="Assets\Scripts\Kinect\InfraredSourceManager.cs" />
     <Compile Include="Assets\Scripts\Kinect\InfraredSourceView.cs" />
     <Compile Include="Assets\Scripts\Kinect\MultiSourceManager.cs" />
+    <Compile Include="Assets\Scripts\SphereController.cs" />
     <Reference Include="Unity.Timeline.Editor">
       <HintPath>C:/Users/samyg/OneDrive/Desktop/Spring2020/CEN/GroupProject/CEN4725-Kinect-3D-Painting/Kinect-3D-Drawing/Library/ScriptAssemblies/Unity.Timeline.Editor.dll</HintPath>
     </Reference>

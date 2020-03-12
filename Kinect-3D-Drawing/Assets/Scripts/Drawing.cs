@@ -14,8 +14,9 @@ public class Drawing : MonoBehaviour
 
     private LineRenderer lr;
     private HandStates states;
-    private List<GameObject> spheres;
     private int index;
+
+    private List<GameObject> spheres;
 
     void Start()
     {
@@ -26,7 +27,7 @@ public class Drawing : MonoBehaviour
 
     private void InitializeVariables ()
     {
-        spheres = new List<GameObject>();
+        spheres = GameManager.spheres;
         lr.positionCount = 1;
         index = 0;
         drawing = false;
@@ -42,6 +43,7 @@ public class Drawing : MonoBehaviour
         Kinect.Joint sourceJoint = b.Joints[Kinect.JointType.HandRight];
         GameObject temp = Instantiate(sphere, bodyView.GetVector3FromJoint(sourceJoint), Quaternion.identity);
         temp.transform.parent = parent.transform;
+        temp.GetComponent<SphereController>().index = spheres.Count;
         spheres.Add(temp);
         if (spheres.Capacity >= 2)
         {

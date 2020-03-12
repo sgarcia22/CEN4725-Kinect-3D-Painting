@@ -28,6 +28,27 @@ public enum ProcessState
 
 public class GameManager : MonoBehaviour
 {
+
+    private static GameManager _instance;
+
+    public static GameManager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                _instance = GameObject.FindObjectOfType<GameManager>();
+            }
+
+            return _instance;
+        }
+    }
+
+    private class Strokes {
+        public int startIndex;
+        public int endIndex;
+    }
+
     [SerializeField]
     private Drawing draw;
     [SerializeField]
@@ -42,6 +63,12 @@ public class GameManager : MonoBehaviour
 
     private LinkedList<string> handStates;     //Keep track of past 10 frames of hand states
     private Dictionary<string, int> handCount; //Keep track of amount of hand states
+    private List<Tuple<int, int>> strokesList; //Keep track of strokes
+    public static List<GameObject> spheres;
+
+    #region Temp
+    int startingStrokeIndex;
+    #endregion Temp
 
     void Awake()
     {
@@ -49,6 +76,8 @@ public class GameManager : MonoBehaviour
         draw.bodyView = bodyView;
         handStates = new LinkedList<string>();
         handCount = new Dictionary<string, int>();
+        strokesList = new List<Tuple<int, int>>();
+        spheres = new List<GameObject>();
     }
      
     void Update()
@@ -73,13 +102,21 @@ public class GameManager : MonoBehaviour
             DetermineGesture(body.Value.body);
         }
     }
-
+    
     private void DetermineGesture(Kinect.Body body)
     {
         Tuple<string, int> max = MaxOccurrence();
         if (max.Item2 >= (threshold / 100) * handStates.Count)
         {
+            ProcessState prev = CurrentState;
             CurrentState = GetState(max.Item1);
+            if (prev != ProcessState.Drawing && CurrentState == ProcessState.Drawing && spheres.Count > 0)
+                startingStrokeIndex = spheres.Count - 1;
+            if (prev == ProcessState.Drawing && CurrentState != prev)
+            {
+                Tuple<int, int> tempStroke = Tuple.Create(startingStrokeIndex, spheres.Count - 1);
+                strokesList.Add(tempStroke);
+            }
             CallClass(body);
         }
     }
@@ -148,6 +185,13 @@ public class GameManager : MonoBehaviour
             case ProcessState.Rotating:
                 break;
         }
+    }
+
+    //Body or Hand collided with sphere
+    //TODO: Implement Erasing Here
+    public void SphereCollided (int index)
+    {
+
     }
 
     private ProcessState Neutral() { return ProcessState.Neutral; }
