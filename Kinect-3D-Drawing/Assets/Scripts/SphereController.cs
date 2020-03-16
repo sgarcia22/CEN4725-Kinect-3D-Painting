@@ -22,15 +22,7 @@ public class SphereController : MonoBehaviour
         //Collision with player
         if (collision.gameObject.name != "SphereBody")
         {
-            GameManager.Instance.SphereCollided(index);
-        }
-    }
-
-    private void OnCollisionExit(Collision collision)
-    {
-        if (collision.gameObject.name != "SphereBody")
-        {
-            GameManager.Instance.SphereCollided(-1);
+            GameManager.Instance.erase.Eraser(index);
         }
     }
 }

@@ -120,6 +120,11 @@ public class BodySourceView : MonoBehaviour
         for (Kinect.JointType jt = Kinect.JointType.SpineBase; jt <= Kinect.JointType.ThumbRight; jt++)
         {
             GameObject jointObj = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            if (jt == Kinect.JointType.HandLeft || jt == Kinect.JointType.HandRight)
+            {
+                BoxCollider box = jointObj.AddComponent<BoxCollider>();
+                box.size = new Vector3(2.5f, 2.5f, 2.5f);
+            }
 
             LineRenderer lr = jointObj.AddComponent<LineRenderer>();
 

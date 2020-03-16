@@ -52,8 +52,7 @@ public class GameManager : MonoBehaviour
 
     [SerializeField]
     private Drawing draw;
-    [SerializeField]
-    private Erase erase;
+    public Erase erase;
     [SerializeField]
     private Recognizer recognizer;
     // Add other classes
@@ -61,7 +60,7 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private float threshold;
 
-    private ProcessState CurrentState { get; set; }
+    public ProcessState CurrentState { get; set; }
     public BodySourceView bodyView;
 
     private LinkedList<string> handStates;     //Keep track of past 10 frames of hand states
@@ -193,7 +192,7 @@ public class GameManager : MonoBehaviour
                 draw.Draw(body, strokeStart);
                 break;
             case ProcessState.Erasing:
-                erase.Eraser(body, sphereCollidedIndex);
+                //erase.Eraser(body, sphereCollidedIndex);
                 break;
             case ProcessState.Zooming:
                 break;

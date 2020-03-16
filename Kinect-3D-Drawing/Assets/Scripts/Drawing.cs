@@ -47,7 +47,6 @@ public class Drawing : MonoBehaviour
         if (spheres.Count != 0)
         {
             AddLineRenderer(temp, strokeStart);
-            temp.GetComponent<MeshRenderer>().enabled = false;
             spheres.Add(temp);
             float distance = Vector3.Distance(spheres[spheres.Count - 2].transform.position, temp.transform.position);
             if (distance > 1f)
@@ -56,13 +55,11 @@ public class Drawing : MonoBehaviour
                 temp.transform.parent = parent.transform;
                 temp.GetComponent<SphereController>().index = spheres.Count;
                 AddLineRenderer(temp, false);
-                temp.GetComponent<MeshRenderer>().enabled = false;
                 spheres.Add(temp);
             }
         }
         else
         {
-            temp.GetComponent<MeshRenderer>().enabled = false;
             spheres.Add(temp);
         }
     }
