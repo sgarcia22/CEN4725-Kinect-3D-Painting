@@ -68,7 +68,7 @@ public class GameManager : MonoBehaviour
 
     #region Temp
     int startingStrokeIndex;
-    int sphereCollidedIndex;
+    int? sphereCollidedIndex;
     #endregion Temp
 
     void Awake()
@@ -104,7 +104,7 @@ public class GameManager : MonoBehaviour
             if (!handCount.ContainsKey(rightHandState)) handCount.Add(rightHandState, 0);
             handStates.AddLast(rightHandState);
             handCount[rightHandState]++;
-            
+
             DetermineGesture(body.Value.body);
         }
     }
@@ -116,14 +116,18 @@ public class GameManager : MonoBehaviour
         {
             ProcessState prev = CurrentState;
             CurrentState = GetState(max.Item1);
+            bool strokeStart = false;
             if (prev != ProcessState.Drawing && CurrentState == ProcessState.Drawing && spheres.Count > 0)
+            {
                 startingStrokeIndex = spheres.Count - 1;
+                strokeStart = true;
+            }
             if (prev == ProcessState.Drawing && CurrentState != prev)
             {
                 Tuple<int, int> tempStroke = Tuple.Create(startingStrokeIndex, spheres.Count - 1);
                 strokesList.Add(tempStroke);
             }
-            CallClass(body);
+            CallClass(body, strokeStart);
         }
     }
 
@@ -160,7 +164,7 @@ public class GameManager : MonoBehaviour
                 return Neutral();
             case "Lasso":
                 return Draw();
-            case "Opened":
+            case "Open":
                 return Erase();
             case "Zooming":
                 return Zoom();
@@ -175,14 +179,14 @@ public class GameManager : MonoBehaviour
     /// Call the appropriate class based on current gesture state
     /// </summary>
     /// <param name="body">Kinect Body</param>
-    private void CallClass (Kinect.Body body)
+    private void CallClass (Kinect.Body body, bool strokeStart)
     {
         switch (CurrentState)
         {
             case ProcessState.Neutral:
                 break;
             case ProcessState.Drawing:
-                draw.Draw(body);
+                draw.Draw(body, strokeStart);
                 break;
             case ProcessState.Erasing:
                 erase.Eraser(body, sphereCollidedIndex);
@@ -197,10 +201,7 @@ public class GameManager : MonoBehaviour
     //Body or Hand collided with sphere
     public void SphereCollided (int index)
     {
-        if (CurrentState == ProcessState.Erasing)
-        {
-            sphereCollidedIndex = index;
-        }
+        sphereCollidedIndex = index;
     }
 
     private ProcessState Neutral() { return ProcessState.Neutral; }
