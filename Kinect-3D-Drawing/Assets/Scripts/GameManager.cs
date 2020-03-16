@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Kinect = Windows.Kinect;
+using Microsoft.Kinect.VisualGestureBuilder;
 
 /// <summary>
 ///  Possible values for Hand States
@@ -23,23 +24,34 @@ public enum ProcessState
     Drawing,
     Erasing,
     Zooming,
-    Rotating
+    Rotating,
+    Undo,
+    Redo
 }
 
 public class GameManager : MonoBehaviour
 {
+    VisualGestureBuilderDatabase _gestureDatabase;
+    VisualGestureBuilderFrameSource _gestureFrameSource;
+    VisualGestureBuilderFrameReader _gestureFrameReader;
+    Kinect.KinectSensor _kinect;
+    Gesture thumbs_down;
+    Gesture thumbs_up;
+    ParticleSystem _ps;
+
     [SerializeField]
     private Drawing draw;
     [SerializeField]
     private Erase erase;
     // Add other classes
+    VisualGestureBuilderFrameArrivedEventArgs e;
 
     [SerializeField]
     private float threshold;
 
     private ProcessState CurrentState { get; set; }
     public BodySourceView bodyView;
-
+    public GameObject AttachedObject;
     private LinkedList<string> handStates;     //Keep track of past 10 frames of hand states
     private Dictionary<string, int> handCount; //Keep track of amount of hand states
 
@@ -50,7 +62,100 @@ public class GameManager : MonoBehaviour
         handStates = new LinkedList<string>();
         handCount = new Dictionary<string, int>();
     }
-     
+
+    void Start()
+    {
+        //gestureController = new GestureController();
+        //gestureController.GestureRecognized += OnGestureRecognized;
+        if (AttachedObject != null)
+        {
+            _ps = AttachedObject.GetComponent<ParticleSystem>();
+            _ps.emissionRate = 4;
+            _ps.startColor = Color.blue;
+        }
+        _kinect = Kinect.KinectSensor.GetDefault();
+
+        _gestureDatabase = VisualGestureBuilderDatabase.Create(Application.streamingAssetsPath + "/Thumbs_down.gbd");
+        _gestureFrameSource = VisualGestureBuilderFrameSource.Create(_kinect, 0);
+
+        //Debug.Log("Before loop");
+        foreach (var gesture in _gestureDatabase.AvailableGestures)
+        {
+            Debug.Log(_gestureDatabase.AvailableGestures);
+            _gestureFrameSource.AddGesture(gesture);
+
+            if (gesture.Name == "thumbs_down")
+            {
+                thumbs_down = gesture;
+                //Debug.Log("Confirmed gesture");
+            }
+            if (gesture.Name == "Thumbs_up")
+            {
+                thumbs_up = gesture;
+            }
+        }
+
+        _gestureFrameReader = _gestureFrameSource.OpenReader();
+        _gestureFrameReader.IsPaused = true;
+        //_gestureFrameReader_FrameArrived();
+    }
+    void _gestureFrameReader_FrameArrived(object sender, VisualGestureBuilderFrameArrivedEventArgs e)
+    {
+        Debug.Log("called");
+        VisualGestureBuilderFrameReference frameReference = e.FrameReference;
+        using (VisualGestureBuilderFrame frame = frameReference.AcquireFrame())
+        {
+            if (frame != null && frame.DiscreteGestureResults != null)
+            {
+                if (AttachedObject == null)
+                    return;
+                
+
+                DiscreteGestureResult result = null;
+
+                if (frame.DiscreteGestureResults.Count > 0)
+                    result = frame.DiscreteGestureResults[thumbs_down];
+                Debug.Log(result);
+                if (result == null)
+                    return;
+                if(result != null)
+                {
+                    Debug.Log("detected?");
+                }
+                if (result.Detected == true)
+                {
+                    var progressResult = frame.ContinuousGestureResults[thumbs_up];
+                    if (AttachedObject != null)
+                    {
+                        var prog = progressResult.Progress;
+                        float scale = 0.5f + prog * 3.0f;
+                        AttachedObject.transform.localScale = new Vector3(scale, scale, scale);
+                        if (_ps != null)
+                        {
+                            _ps.emissionRate = 100 * prog;
+                            _ps.startColor = Color.red;
+                        }
+                    }
+                }
+                else
+                {
+                    if (_ps != null)
+                    {
+                        _ps.emissionRate = 4;
+                        _ps.startColor = Color.blue;
+                    }
+                }
+            }
+        }
+    }
+
+    public void SetTrackingId(ulong id)
+    {
+        _gestureFrameReader.IsPaused = false;
+        _gestureFrameSource.TrackingId = id;
+        _gestureFrameReader.FrameArrived += _gestureFrameReader_FrameArrived;
+    }
+
     void Update()
     {
         //Currently only doing Right Hand
@@ -71,6 +176,19 @@ public class GameManager : MonoBehaviour
             handCount[rightHandState]++;
             
             DetermineGesture(body.Value.body);
+            //attempts
+            /*if(thumbs_down == true)
+            {
+                Debug.Log("Compare");
+            }
+            if(body.Value.body == thumbs_down)
+            {
+                 Debug.Log("Compare");
+            }*/
+            if (DetermineGesture(body.Value.body) == thumbs_down)
+            {
+                Debug.Log("Compare");
+            }
         }
     }
 
@@ -82,6 +200,7 @@ public class GameManager : MonoBehaviour
             CurrentState = GetState(max.Item1);
             CallClass(body);
         }
+
     }
 
     /// <summary>
@@ -109,6 +228,7 @@ public class GameManager : MonoBehaviour
     /// Change the state of the FSM
     /// </summary>
     /// <param name="state">Current State</param>
+    
     private ProcessState GetState(string state)
     {
         switch (state)
@@ -123,11 +243,28 @@ public class GameManager : MonoBehaviour
                 return Zoom();
             case "Rotating":
                 return Rotate();
+          //  case thumbs_down:
+           // Debug.Log("VAL: TRUE");
+                return 0;
             default:
                 return Neutral();
         }
     }
 
+
+   /* private void OnGestureRecognized(object sender, Gestures e)
+    {
+        switch (e.GestureName)
+        {
+            case thumbs_down:
+                // do what you want to do
+                Debug.Log("working");
+                break;
+
+            default:
+                break;
+        }
+    }*/
     /// <summary>
     /// Call the appropriate class based on current gesture state
     /// </summary>
@@ -145,6 +282,8 @@ public class GameManager : MonoBehaviour
                 break;
             case ProcessState.Zooming:
                 break;
+     //       case thumbs_down:
+       //         Debug.Log("in process");
             case ProcessState.Rotating:
                 break;
         }
