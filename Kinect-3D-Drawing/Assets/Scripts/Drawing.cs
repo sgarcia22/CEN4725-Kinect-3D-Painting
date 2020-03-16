@@ -25,7 +25,7 @@ public class Drawing : MonoBehaviour
         InitializeVariables();
     }
 
-    private void InitializeVariables ()
+    private void InitializeVariables()
     {
         spheres = GameManager.spheres;
         //lr.positionCount = 1;
@@ -67,7 +67,7 @@ public class Drawing : MonoBehaviour
         }
     }
 
-    private void AddLineRenderer (GameObject temp, bool strokeStart)
+    private void AddLineRenderer(GameObject temp, bool strokeStart)
     {
         if (strokeStart) return;
         LineRenderer lr = temp.AddComponent<LineRenderer>();

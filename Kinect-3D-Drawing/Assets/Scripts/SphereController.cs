@@ -9,12 +9,12 @@ public class SphereController : MonoBehaviour
 
     void Start()
     {
-        
+
     }
 
     void Update()
     {
-        
+
     }
 
     private void OnCollisionEnter(Collision collision)

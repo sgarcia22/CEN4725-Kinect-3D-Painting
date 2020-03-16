@@ -44,7 +44,8 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    private class Strokes {
+    private class Strokes
+    {
         public int startIndex;
         public int endIndex;
     }
@@ -108,7 +109,7 @@ public class GameManager : MonoBehaviour
             DetermineGesture(body.Value.body);
         }
     }
-    
+
     private void DetermineGesture(Kinect.Body body)
     {
         Tuple<string, int> max = MaxOccurrence();
@@ -179,7 +180,7 @@ public class GameManager : MonoBehaviour
     /// Call the appropriate class based on current gesture state
     /// </summary>
     /// <param name="body">Kinect Body</param>
-    private void CallClass (Kinect.Body body, bool strokeStart)
+    private void CallClass(Kinect.Body body, bool strokeStart)
     {
         switch (CurrentState)
         {
@@ -199,7 +200,7 @@ public class GameManager : MonoBehaviour
     }
 
     //Body or Hand collided with sphere
-    public void SphereCollided (int index)
+    public void SphereCollided(int index)
     {
         sphereCollidedIndex = index;
     }

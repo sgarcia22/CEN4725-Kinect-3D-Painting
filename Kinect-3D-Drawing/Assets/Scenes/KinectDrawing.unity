@@ -312,9 +312,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1212964635}
-  - component: {fileID: 1212964638}
-  - component: {fileID: 1212964634}
   - component: {fileID: 1212964637}
+  - component: {fileID: 1212964636}
+  - component: {fileID: 1212964634}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -331,13 +331,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 1212964633}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c28276f0af99ed84d95e0f8aed5de161, type: 3}
+  m_Script: {fileID: 11500000, guid: 2bec75ce28c03d446b89ddda1517df9d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  drawing: 0
-  bodyView: {fileID: 0}
-  sphere: {fileID: 6329391578992165009, guid: 87fb8bfbce8475e4f84ceb4a600c31de, type: 3}
-  parent: {fileID: 523910735}
+  draw: {fileID: 1212964636}
+  erase: {fileID: 1212964637}
+  threshold: 50
+  bodyView: {fileID: 112136120}
 --- !u!4 &1212964635
 Transform:
   m_ObjectHideFlags: 0
@@ -352,6 +352,22 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1212964636
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1212964633}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c28276f0af99ed84d95e0f8aed5de161, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  drawing: 0
+  bodyView: {fileID: 0}
+  sphere: {fileID: 6329391578992165009, guid: 87fb8bfbce8475e4f84ceb4a600c31de, type: 3}
+  parent: {fileID: 523910735}
 --- !u!114 &1212964637
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -367,22 +383,6 @@ MonoBehaviour:
   eraserIndicator: {fileID: 2664101998227297785, guid: 3dae6a4ce83becb45b31598e44c0cdc9,
     type: 3}
   bodyView: {fileID: 0}
---- !u!114 &1212964638
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1212964633}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2bec75ce28c03d446b89ddda1517df9d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  draw: {fileID: 1212964634}
-  erase: {fileID: 1212964637}
-  threshold: 50
-  bodyView: {fileID: 112136120}
 --- !u!1 &1698423884
 GameObject:
   m_ObjectHideFlags: 0
