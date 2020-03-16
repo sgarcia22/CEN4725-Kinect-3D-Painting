@@ -68,18 +68,24 @@ public class GameManager : MonoBehaviour
 
     #region Temp
     int startingStrokeIndex;
+    int sphereCollidedIndex;
     #endregion Temp
 
     void Awake()
     {
         Neutral(); // Set initial gesture to neutral
         draw.bodyView = bodyView;
+        erase.bodyView = bodyView;
         handStates = new LinkedList<string>();
         handCount = new Dictionary<string, int>();
         strokesList = new List<Tuple<int, int>>();
         spheres = new List<GameObject>();
     }
-     
+
+    private void Start()
+    {
+    }
+
     void Update()
     {
         //Currently only doing Right Hand
@@ -179,6 +185,7 @@ public class GameManager : MonoBehaviour
                 draw.Draw(body);
                 break;
             case ProcessState.Erasing:
+                erase.Eraser(body, sphereCollidedIndex);
                 break;
             case ProcessState.Zooming:
                 break;
@@ -188,10 +195,12 @@ public class GameManager : MonoBehaviour
     }
 
     //Body or Hand collided with sphere
-    //TODO: Implement Erasing Here
     public void SphereCollided (int index)
     {
-
+        if (CurrentState == ProcessState.Erasing)
+        {
+            sphereCollidedIndex = index;
+        }
     }
 
     private ProcessState Neutral() { return ProcessState.Neutral; }

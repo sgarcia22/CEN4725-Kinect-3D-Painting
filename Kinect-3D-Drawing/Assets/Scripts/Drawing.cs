@@ -12,7 +12,7 @@ public class Drawing : MonoBehaviour
     public BodySourceView bodyView;
     public GameObject sphere, parent;
 
-    private LineRenderer lr;
+    //private LineRenderer lr;
     private HandStates states;
     private int index;
 
@@ -20,7 +20,7 @@ public class Drawing : MonoBehaviour
 
     void Start()
     {
-        lr = GetComponent<LineRenderer>();
+        //lr = GetComponent<LineRenderer>();
         states = new HandStates();
         InitializeVariables();
     }
@@ -28,7 +28,7 @@ public class Drawing : MonoBehaviour
     private void InitializeVariables ()
     {
         spheres = GameManager.spheres;
-        lr.positionCount = 1;
+        //lr.positionCount = 1;
         index = 0;
         drawing = false;
     }
@@ -44,12 +44,21 @@ public class Drawing : MonoBehaviour
         GameObject temp = Instantiate(sphere, bodyView.GetVector3FromJoint(sourceJoint), Quaternion.identity);
         temp.transform.parent = parent.transform;
         temp.GetComponent<SphereController>().index = spheres.Count;
-        spheres.Add(temp);
-        if (spheres.Capacity >= 2)
+        if (spheres.Count != 0)
         {
-            lr.positionCount += 1;
-            lr.SetPosition(index, spheres[index].transform.position);
-            lr.SetPosition(++index, temp.transform.position);
+            AddLineRenderer(temp);
         }
+        spheres.Add(temp);
+    }
+
+    private void AddLineRenderer (GameObject temp)
+    {
+        LineRenderer lr = temp.AddComponent<LineRenderer>();
+        int tempIndex = spheres.Count - 1;
+        lr.positionCount = 2;
+        lr.SetPosition(0, spheres[tempIndex].transform.position);
+        lr.SetPosition(1, temp.transform.position);
+        lr.startWidth = .1f;
+        lr.endWidth = .1f;
     }
 }

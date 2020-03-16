@@ -1,18 +1,41 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Kinect = Windows.Kinect;
 
 public class Erase : MonoBehaviour
 {
-    // Start is called before the first frame update
+    public bool erasing;
+    public BodySourceView bodyView;
+    public GameObject sphere, parent;
+
+    private HandStates states;
+    private int index;
+    private List<GameObject> spheres;
+
     void Start()
     {
-        
+        states = new HandStates();
+        InitializeVariables();
     }
 
-    // Update is called once per frame
-    void Update()
+    private void InitializeVariables()
     {
-        
+        spheres = GameManager.spheres;
+        index = 0;
+        erasing = false;
+    }
+
+    public void Eraser(Kinect.Body b, int index)
+    {
+       //Here you can do something like
+
+        /*if (index != null) {
+
+        spheres[index].GetComponent<LineRenderer>().setActive(false);
+        spheres[index].SetActive(false);
+        }
+    
+     */
     }
 }
