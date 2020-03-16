@@ -47,8 +47,17 @@ public class Drawing : MonoBehaviour
         if (spheres.Count != 0)
         {
             AddLineRenderer(temp);
+            spheres.Add(temp);
+            float distance = Vector3.Distance(spheres[spheres.Count - 2].transform.position, temp.transform.position);
+            if (distance > 1f) {
+                temp = Instantiate(sphere, (spheres[spheres.Count - 2].transform.position + temp.transform.position) / 2, Quaternion.identity);
+                temp.transform.parent = parent.transform;
+                temp.GetComponent<SphereController>().index = spheres.Count;
+                AddLineRenderer(temp);
+                spheres.Add(temp);
+            }
         }
-        spheres.Add(temp);
+        else spheres.Add(temp);
     }
 
     private void AddLineRenderer (GameObject temp)
