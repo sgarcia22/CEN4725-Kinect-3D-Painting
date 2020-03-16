@@ -4,5 +4,8 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/KinectDrawing.unity
+    guid: faf184647470f9740aacf59ae2a456b7
   m_configObjects: {}

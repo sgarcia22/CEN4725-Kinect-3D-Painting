@@ -525,7 +525,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Left Hand (Non-Dominant)
+  m_Text: Left Hand
 --- !u!222 &1055938374
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1070,7 +1070,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 1
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: Right Hand (Non-Dominant)
+  m_Text: Right Hand
 --- !u!222 &1838499276
 CanvasRenderer:
   m_ObjectHideFlags: 0
