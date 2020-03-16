@@ -54,6 +54,8 @@ public class GameManager : MonoBehaviour
     private Drawing draw;
     [SerializeField]
     private Erase erase;
+    [SerializeField]
+    private Recognizer recognizer;
     // Add other classes
 
     [SerializeField]
@@ -93,6 +95,7 @@ public class GameManager : MonoBehaviour
         foreach (KeyValuePair<ulong, BodySourceView.BodyValue> body in bodyView.GetBodyGameObject())
         {
             Kinect.Body b = body.Value.body;
+            recognizer.Test(b);
             string rightHandState = b.HandRightState.ToString();
             if (rightHandState == "Unknown" || rightHandState == "NotTracked") rightHandState = "Neutral";
 
