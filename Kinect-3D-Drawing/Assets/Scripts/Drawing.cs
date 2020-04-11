@@ -11,6 +11,7 @@ public class Drawing : MonoBehaviour
     public bool drawing;
     public BodySourceView bodyView;
     public GameObject sphere, parent;
+    public Material rendMaterial;
 
     //private LineRenderer lr;
     private HandStates states;
@@ -48,15 +49,6 @@ public class Drawing : MonoBehaviour
         {
             AddLineRenderer(temp, strokeStart);
             spheres.Add(temp);
-            float distance = Vector3.Distance(spheres[spheres.Count - 2].transform.position, temp.transform.position);
-            if (distance > 1f)
-            {
-                temp = Instantiate(sphere, (spheres[spheres.Count - 2].transform.position + temp.transform.position) / 2, Quaternion.identity);
-                temp.transform.parent = parent.transform;
-                temp.GetComponent<SphereController>().index = spheres.Count;
-                AddLineRenderer(temp, false);
-                spheres.Add(temp);
-            }
         }
         else
         {
@@ -72,7 +64,9 @@ public class Drawing : MonoBehaviour
         lr.positionCount = 2;
         lr.SetPosition(0, spheres[tempIndex].transform.position);
         lr.SetPosition(1, temp.transform.position);
-        lr.startWidth = .1f;
-        lr.endWidth = .1f;
+        lr.startWidth = .2f;
+        lr.endWidth = .2f;
+        lr.material = rendMaterial;
+        lr.numCapVertices = 2;
     }
 }

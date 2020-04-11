@@ -59,6 +59,8 @@ public class GameManager : MonoBehaviour
 
     [SerializeField]
     private float threshold;
+    [SerializeField]
+    private int frameDelay, maxListCount;
 
     public ProcessState CurrentState { get; set; }
     public BodySourceView bodyView;
@@ -71,6 +73,7 @@ public class GameManager : MonoBehaviour
     #region Temp
     int startingStrokeIndex;
     int? sphereCollidedIndex;
+    int frameCount = 0;
     #endregion Temp
 
     void Awake()
@@ -93,12 +96,15 @@ public class GameManager : MonoBehaviour
         //Currently only doing Right Hand
         foreach (KeyValuePair<ulong, BodySourceView.BodyValue> body in bodyView.GetBodyGameObject())
         {
+            //Reset frame count if just starting 
+            if (handCount.Count == 0) frameCount = 0;
+
             Kinect.Body b = body.Value.body;
             recognizer.Test(b);
             string rightHandState = b.HandRightState.ToString();
             if (rightHandState == "Unknown" || rightHandState == "NotTracked") rightHandState = "Neutral";
 
-            if (handStates.Count > 10)
+            if (handStates.Count > maxListCount)
             {
                 handCount[handStates.First.Value]--;
                 handStates.RemoveFirst();
@@ -110,6 +116,9 @@ public class GameManager : MonoBehaviour
 
             DetermineGesture(body.Value.body);
         }
+        frameCount++;
+        if (frameCount > frameDelay)
+            frameCount = 0;
     }
 
     private void DetermineGesture(Kinect.Body body)
@@ -129,6 +138,8 @@ public class GameManager : MonoBehaviour
             {
                 Tuple<int, int> tempStroke = Tuple.Create(startingStrokeIndex, spheres.Count - 1);
                 strokesList.Add(tempStroke);
+
+                frameCount = 0;
             }
             CallClass(body, strokeStart);
         }
@@ -189,10 +200,11 @@ public class GameManager : MonoBehaviour
             case ProcessState.Neutral:
                 break;
             case ProcessState.Drawing:
-                draw.Draw(body, strokeStart);
+                if (frameCount == frameDelay)
+                    draw.Draw(body, strokeStart);
                 break;
             case ProcessState.Erasing:
-                //erase.Eraser(body, sphereCollidedIndex);
+                erase.Eraser(sphereCollidedIndex);
                 break;
             case ProcessState.Zooming:
                 break;
