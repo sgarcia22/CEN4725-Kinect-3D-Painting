@@ -7,10 +7,7 @@ using Kinect = Windows.Kinect;
 public class Recognizer : MonoBehaviour
 {
     public BodySourceView bodyview;
-    public Text neutralDText;
-    public Text neutralNDText;
-    public Text drawText;
-    public Text eraseText;
+    public double handLength; // Default hand length for development
 
     // HandShape depicts the shape of a user’s hand in one frame
     public class HandShape
@@ -127,6 +124,10 @@ public class Recognizer : MonoBehaviour
     public ContinuousGesture[] allCGestures;    // Array containing all ContinuousGesture objects implemented in the project
     public DiscreteGesture[] allDGestures;      // Array containing all DiscreteGesture objects implemented in the project
 
+    // Used to measure average hand distances to determine appropriate ratios
+    public double lastAvg;
+    public double lastCount;
+
     void Awake()
     {
         // Initialize most global variables
@@ -138,12 +139,11 @@ public class Recognizer : MonoBehaviour
         rightPattern = new HandPattern();       // Create HandPattern object
         rightPattern.side = "right";            // Indicate that this HandPattern is for the right hand
 
-        // Only for the demo
-        neutralDText.text = "Neutral:\t0";
-        neutralNDText.text = "Neutral:\t0";
-        drawText.text = "Draw:\t\t0";
-        eraseText.text = "Erase:\t\t0";
+        handLength = 0.8215; // Default hand length for development
 
+        // Used to calculate averages
+        lastAvg = 0.0;
+        lastCount = 0;
 
 
         // Initialize all ContinuousGesture objects within allCGestures
@@ -234,21 +234,24 @@ public class Recognizer : MonoBehaviour
     // Returns true if the hand's thumb is extended (determined by "side")
     public bool checkThumbExtended(Kinect.Body b, string side)
     {
-        // The threshold is to be determined by the length of the user's hand
-        // and the ratio of expected extended thumb distance to hand length
-        // However, a default threshold of 0.7 is used for the prototype   
-        double threshold = 0.6;
+        // Experimentally, the ratio to determine the threshold was found
+        // to be best at about 0.7304 times the hand length
+        double threshold = 0.7304 * handLength;
 
         Kinect.Joint handJoint;
+        Kinect.Joint handTipJoint;
         Kinect.Joint thumbJoint;
 
         Vector3 handJointVector;
+        Vector3 handTipJointVector;
         Vector3 thumbJointVector;
 
         if (side == "right")
         {
             handJoint = b.Joints[Kinect.JointType.HandRight];
             handJointVector = bodyview.GetVector3FromJoint(handJoint);
+            handTipJoint = b.Joints[Kinect.JointType.HandTipRight];
+            handTipJointVector = bodyview.GetVector3FromJoint(handTipJoint);
             thumbJoint = b.Joints[Kinect.JointType.ThumbRight];
             thumbJointVector = bodyview.GetVector3FromJoint(thumbJoint);
         }
@@ -256,16 +259,29 @@ public class Recognizer : MonoBehaviour
         {
             handJoint = b.Joints[Kinect.JointType.HandLeft];
             handJointVector = bodyview.GetVector3FromJoint(handJoint);
+            handTipJoint = b.Joints[Kinect.JointType.HandTipLeft];
+            handTipJointVector = bodyview.GetVector3FromJoint(handTipJoint);
             thumbJoint = b.Joints[Kinect.JointType.ThumbLeft];
             thumbJointVector = bodyview.GetVector3FromJoint(thumbJoint);
         }
 
-        if (Vector3.Distance(handJointVector, thumbJointVector) > threshold)
+        // Find the point one third of the distance from the hand joint to the hand tip joint
+        Vector3 handCenterVector = Vector3.MoveTowards(handJointVector, handTipJointVector, (float)(handLength / 2.3));
+
+        if (Vector3.Distance(handCenterVector, thumbJointVector) > threshold)
         {
+            if(side == "right")
+            {
+                //Debug.Log("True");
+            }
             return true;
         }
         else
         {
+            if (side == "right")
+            {
+                //Debug.Log("False");
+            }
             return false;
         }
     }
@@ -273,9 +289,9 @@ public class Recognizer : MonoBehaviour
     // Returns true if the hand's tip is open is extended (determined by "side")
     public bool checkHandTipOpen(Kinect.Body b, string side)
     {
-        // The threshold is to be determined by the length of the user's hand
-        // However, a default threshold of 0.6 is used for the prototype   
-        double threshold = 0.6;
+        // Experimentally, the ratio to determine the threshold was found
+        // to be best at about 0.7304 times the hand length
+        double threshold = 0.7304 * handLength;
 
         Kinect.Joint handJoint;
         Kinect.Joint handTipJoint;
@@ -289,7 +305,6 @@ public class Recognizer : MonoBehaviour
             handJointVector = bodyview.GetVector3FromJoint(handJoint);
             handTipJoint = b.Joints[Kinect.JointType.HandTipRight];
             handTipJointVector = bodyview.GetVector3FromJoint(handTipJoint);
-            //Debug.Log(Vector3.Distance(handJointVector, handTipJointVector));
         }
         else
         {
@@ -309,6 +324,32 @@ public class Recognizer : MonoBehaviour
         }
     }
 
+    // Gets the angles for the hand joint
+    public double[] getHandAngles(Kinect.Body b, string side)
+    {
+        Kinect.Joint handJoint;
+
+        if(side == "right")
+        {
+            handJoint = b.Joints[Kinect.JointType.HandRight];
+        }
+        else
+        {
+            handJoint = b.Joints[Kinect.JointType.HandLeft];
+        }
+
+        // Determine angle relative to x-axis
+        Vector3 handJointVector = bodyview.GetVector3FromJoint(handJoint);
+        Vector3 x_axis = new Vector3(1000, handJointVector.y, handJointVector.z);
+
+        if (side == "right")
+        {
+            //Debug.Log(Vector3.Angle(x_axis, handJointVector));
+        }
+
+        return null;
+    }
+
     public void FrameCheck(Kinect.Body b)
     {
         string side;
@@ -320,8 +361,7 @@ public class Recognizer : MonoBehaviour
         side = "left";
         thumbExtended = checkThumbExtended(b, "left");
         handTipOpen = checkHandTipOpen(b, "left");
-        // Right now, we're not checking the values of the palm pitch, roll, and yaw
-        // because they are not relevant to the three implemented gestures
+        palmPitchRollYaw = getHandAngles(b, "left");
         HandShape leftShape = new HandShape();
 
         leftShape.side = side;
@@ -353,8 +393,7 @@ public class Recognizer : MonoBehaviour
         side = "right";
         thumbExtended = checkThumbExtended(b, "right");
         handTipOpen = checkHandTipOpen(b, "right");
-        // Right now, we're not checking the values of the palm pitch, roll, and yaw
-        // because they are not relevant to the three implemented gestures
+        palmPitchRollYaw = getHandAngles(b, "right");
         HandShape rightShape = new HandShape();
 
         rightShape.side = side;
@@ -440,7 +479,7 @@ public class Recognizer : MonoBehaviour
             {
                 continue;
             }
-            if (cg.score > bestGestureScore)
+            if (cg.score > bestGestureScore && cg.score > 40)
             {
                 bestGestureScore = cg.score;
                 bestGestureName = cg.gestureName;
@@ -458,7 +497,7 @@ public class Recognizer : MonoBehaviour
             {
                 continue;
             }
-            if (cg.score > bestGestureScore)
+            if (cg.score > bestGestureScore && cg.score > 40)
             {
                 bestGestureScore = cg.score;
                 bestGestureName = cg.gestureName;
@@ -466,13 +505,7 @@ public class Recognizer : MonoBehaviour
         }
         currentNonDominantGesture = bestGestureName;
 
-        // This is just hard-coded for the demo
-        // to demonstrate the experimental system
-        neutralDText.text = "Neutral:\t" + allCGestures[0].score.ToString();
-        neutralNDText.text = "Neutral:\t" + allCGestures[1].score.ToString();
-        drawText.text = "Draw:\t\t" + allCGestures[2].score.ToString();
-        eraseText.text = "Erase:\t\t" + allCGestures[3].score.ToString();
-
         //Debug.Log(currentDominantGesture);
+        //Debug.Log(lastAvg);
     }
 }
