@@ -125,8 +125,7 @@ public class Recognizer : MonoBehaviour
     public DiscreteGesture[] allDGestures;      // Array containing all DiscreteGesture objects implemented in the project
 
     // Used to measure average hand distances to determine appropriate ratios
-    public double lastAvg;
-    public double lastCount;
+    public double lengthCount;
 
     void Awake()
     {
@@ -140,10 +139,7 @@ public class Recognizer : MonoBehaviour
         rightPattern.side = "right";            // Indicate that this HandPattern is for the right hand
 
         handLength = 0.8215; // Default hand length for development
-
-        // Used to calculate averages
-        lastAvg = 0.0;
-        lastCount = 0;
+        lengthCount = 1;
 
 
         // Initialize all ContinuousGesture objects within allCGestures
@@ -432,6 +428,31 @@ public class Recognizer : MonoBehaviour
         // Update global HandPattern objects
         FrameCheck(b);
 
+        Kinect.Joint handJoint = b.Joints[Kinect.JointType.HandRight];
+        Vector3 handJointVector = bodyview.GetVector3FromJoint(handJoint);
+        Kinect.Joint handTipJoint = b.Joints[Kinect.JointType.HandTipRight];
+        Vector3 handTipJointVector = bodyview.GetVector3FromJoint(handTipJoint);
+
+        double newLength = Vector3.Distance(handJointVector, handTipJointVector);
+
+        // Adjust newLength depending on Kinect-detected hand state
+        if(b.HandRightState.ToString() == "Closed")
+        {
+            newLength = newLength / 0.6814; // Experimentally-determined value
+        }
+
+        // Update hand length estimate
+        double undividedSum = handLength * lengthCount;  // Multiply handLength by lengthCount to find the value of the previous sum before division
+        undividedSum = undividedSum + newLength;    // Add new distance to undivided sum
+        handLength = undividedSum / (lengthCount + 1);    // Divide by new count to get average
+        
+        // There's a cap to how large lengthCount can get,
+        // preventing subsequent hand size estimates from having too little weight
+        if(lengthCount < 9999)
+        {
+            lengthCount++;
+        }
+
         // Create new HandPattern objects for each hand
         HandPattern dominantHandPattern = new HandPattern();
         HandPattern nonDominantHandPattern = new HandPattern();
@@ -471,6 +492,7 @@ public class Recognizer : MonoBehaviour
 
         string bestGestureName = "Neutral";
         double bestGestureScore = 0.0;
+        bool foundGestureGreaterThan40 = false;
 
         // Find the current dominant gesture
         foreach (ContinuousGesture cg in allCGestures)
@@ -479,16 +501,28 @@ public class Recognizer : MonoBehaviour
             {
                 continue;
             }
+            if(cg.score > 40)
+            {
+                foundGestureGreaterThan40 = true;
+            }
             if (cg.score > bestGestureScore && cg.score > 40)
             {
                 bestGestureScore = cg.score;
                 bestGestureName = cg.gestureName;
             }
         }
-        currentDominantGesture = bestGestureName;
+        if(foundGestureGreaterThan40)
+        {
+            currentDominantGesture = bestGestureName;
+        }
+        else
+        {
+            currentDominantGesture = "Neutral";
+        }
 
         bestGestureName = "Neutral";
         bestGestureScore = 0.0;
+        foundGestureGreaterThan40 = false;
 
         // Find the current non-dominant gesture
         foreach (ContinuousGesture cg in allCGestures)
@@ -497,15 +531,26 @@ public class Recognizer : MonoBehaviour
             {
                 continue;
             }
+            if (cg.score > 40)
+            {
+                foundGestureGreaterThan40 = true;
+            }
             if (cg.score > bestGestureScore && cg.score > 40)
             {
                 bestGestureScore = cg.score;
                 bestGestureName = cg.gestureName;
             }
         }
-        currentNonDominantGesture = bestGestureName;
+        if (foundGestureGreaterThan40)
+        {
+            currentNonDominantGesture = bestGestureName;
+        }
+        else
+        {
+            currentNonDominantGesture = "Neutral";
+        }
 
-        //Debug.Log(currentDominantGesture);
+        Debug.Log(currentDominantGesture);
         //Debug.Log(lastAvg);
     }
 }
