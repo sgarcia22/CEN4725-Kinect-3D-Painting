@@ -12,12 +12,10 @@ public class Recognizer : MonoBehaviour
     // HandShape depicts the shape of a user’s hand in one frame
     public class HandShape
     {
-        public string side;         // “left” if left hand, “right” if right
-        public int thumbExtended;  // True (1) if the thumb joint is extended
-        public int handTipOpen;    // True (1) if the hand tip join is extended
-        public double palmPitch;    // Pitch of hand joint relative to Kinect
-        public double palmRoll;     // Roll of hand joint relative to Kinect
-        public double palmYaw;      // Yaw of hand joint relative to Kinect
+        public string side;             // “left” if left hand, “right” if right
+        public int thumbExtended;       // True (1) if the thumb joint is extended
+        public int handTipOpen;         // True (1) if the hand tip join is extended
+        public string palmOrientation;  // "towards" if the palm is facing the Kinect, "away" if the palm is facing away from the Kinect, "neither" if neither
     }
 
     // HandPattern depicts the shape of the user’s hand across 100 unity frames
@@ -48,12 +46,7 @@ public class Recognizer : MonoBehaviour
         public int thumbExtended;		// 1 if thumb is extended, 0 if not, -1 if irrelevant
         public int handTipOpen;			// 1 if hand tip is open, 0 if not, -1 if irrelevant
         bool isMet;                     // Used for discrete gesture series
-        public double minPalmPitch;     // Min possible matching palm pitch
-        public double maxPalmPitch;     // Max possible matching palm pitch
-        public double minPalmRoll;      // Min possible matching palm roll
-        public double maxPalmRoll;      // Max possible matching palm roll
-        public double minPalmYaw;       // Min possible matching palm yaw
-        public double maxPalmYaw;       // Max possible matching palm yaw
+        public string palmOrientation;  // "towards" if the palm must face the Kinect, "away" if the palm must face away from the Kinect, "irrelevant" if irrelevant
 
         public double matches(HandPattern inputHandPattern)
         {
@@ -73,25 +66,12 @@ public class Recognizer : MonoBehaviour
                     continue;
                 }
 
-
-                // Check if the palm pitch is within the threshold
-                if (shape.palmPitch < minPalmPitch || shape.palmPitch > maxPalmPitch)
+                // Check if palm is facing the correct way
+                if(palmOrientation != "irrelevant" && palmOrientation != shape.palmOrientation)
                 {
                     continue;
                 }
 
-
-                // Check if the palm roll is within the threshold
-                if (shape.palmRoll < minPalmRoll || shape.palmRoll > maxPalmRoll)
-                {
-                    continue;
-                }
-
-                // Check if the palm yaw is within the threshold
-                if (shape.palmYaw < minPalmYaw || shape.palmYaw > maxPalmYaw)
-                {
-                    continue;
-                }
                 matchingShapes++;
             }
 
@@ -163,12 +143,7 @@ public class Recognizer : MonoBehaviour
         triggerGesture.name = gestureName;                              // Set triggerGesture to have the name "Neutral"
         triggerGesture.thumbExtended = 0;                               // The thumb must be closed
         triggerGesture.handTipOpen = 0;                                 // The hand tip must be closed
-        triggerGesture.minPalmPitch = 0.0;                              // Minimum palm pitch is 0 degrees
-        triggerGesture.maxPalmPitch = 360.0;                            // Maximum palm pitch is 360 degrees
-        triggerGesture.minPalmRoll = 0.0;                               // Minimum palm roll is 0 degrees
-        triggerGesture.maxPalmRoll = 360.0;                             // Maximum palm roll is 360 degrees
-        triggerGesture.minPalmYaw = 0.0;                                // Minimum palm yaw is 360 degrees
-        triggerGesture.maxPalmYaw = 360.0;                              // Maximum palm yaw is 360 degrees
+        triggerGesture.palmOrientation = "irrelevant";                  // Palm orientation is not relevant to this gesture
         ContinuousGesture NeutralDominant = new ContinuousGesture();    // Create new ContinuousGesture object
         NeutralDominant.gestureName = gestureName;                      // Assign "Neutral" to ContinuousGesture name
         NeutralDominant.dominant = dominant;                            // Indicate that this is for the dominant hand
@@ -188,12 +163,7 @@ public class Recognizer : MonoBehaviour
         triggerGesture.name = gestureName;                              // Set triggerGesture to have the name "Draw"
         triggerGesture.thumbExtended = 0;                               // The thumb must be closed
         triggerGesture.handTipOpen = 1;                                 // The hand tip must be open
-        triggerGesture.minPalmPitch = 0.0;                              // Minimum palm pitch is 0 degrees
-        triggerGesture.maxPalmPitch = 360.0;                            // Maximum palm pitch is 360 degrees
-        triggerGesture.minPalmRoll = 0.0;                               // Minimum palm roll is 0 degrees
-        triggerGesture.maxPalmRoll = 360.0;                             // Maximum palm roll is 360 degrees
-        triggerGesture.minPalmYaw = 0.0;                                // Minimum palm yaw is 360 degrees
-        triggerGesture.maxPalmYaw = 360.0;                              // Maximum palm yaw is 360 degrees
+        triggerGesture.palmOrientation = "irrelevant";                  // Palm orientation is not relevant to this gesture
         ContinuousGesture Draw = new ContinuousGesture();               // Create new ContinuousGesture object
         Draw.gestureName = gestureName;                                 // Assign "Draw" to ContinuousGesture name
         Draw.dominant = dominant;                                       // Indicate that this is for the dominant hand
@@ -207,12 +177,7 @@ public class Recognizer : MonoBehaviour
         triggerGesture.name = gestureName;                              // Set triggerGesture to have the name "Erase"
         triggerGesture.thumbExtended = 1;                               // The thumb must be extended
         triggerGesture.handTipOpen = 1;                                 // The hand tip must be open
-        triggerGesture.minPalmPitch = 0.0;                              // Minimum palm pitch is 0 degrees
-        triggerGesture.maxPalmPitch = 360.0;                            // Maximum palm pitch is 360 degrees
-        triggerGesture.minPalmRoll = 0.0;                               // Minimum palm roll is 0 degrees
-        triggerGesture.maxPalmRoll = 360.0;                             // Maximum palm roll is 360 degrees
-        triggerGesture.minPalmYaw = 0.0;                                // Minimum palm yaw is 360 degrees
-        triggerGesture.maxPalmYaw = 360.0;                              // Maximum palm yaw is 360 degrees
+        triggerGesture.palmOrientation = "irrelevant";                  // Palm orientation is not relevant to this gesture
         ContinuousGesture Erase = new ContinuousGesture();              // Create new ContinuousGesture object
         Erase.gestureName = gestureName;                                // Assign "Erase" to ContinuousGesture name
         Erase.dominant = dominant;                                      // Indicate that this is for the dominant hand
@@ -362,6 +327,12 @@ public class Recognizer : MonoBehaviour
         return palmNormalVector;
     }
 
+    // Returns string for the palm orientation
+    public string getPalmOrientation(Kinect.Body b, string side)
+    {
+        return "neither";
+    }
+
     public void FrameCheck(Kinect.Body b)
     {
         string side;
@@ -397,8 +368,7 @@ public class Recognizer : MonoBehaviour
             leftShape.handTipOpen = 0;
         }
 
-        // Right now, we're not adding the values of the palm pitch, roll, and yaw
-        // because they are not relevant to the three implemented gestures
+        leftShape.palmOrientation = getPalmOrientation(b, "left");
 
         // Add newest values to rightPattern
         side = "right";
@@ -428,8 +398,7 @@ public class Recognizer : MonoBehaviour
             rightShape.handTipOpen = 0;
         }
 
-        // Right now, we're not adding the values of the palm pitch, roll, and yaw
-        // because they are not relevant to the three implemented gestures
+        leftShape.palmOrientation = getPalmOrientation(b, "right");
 
         // Add the new HandShape objects to the HandPattern objects
         leftPattern.add(leftShape);
