@@ -184,6 +184,74 @@ public class Recognizer : MonoBehaviour
         Erase.triggerGesture = triggerGesture;                          // Assign triggerGesture to Erase 
         allCGestures[3] = Erase;                                        // Add Erase to allCGestures
 
+
+
+
+
+        // Initialize all DiscreteGesture objects within allCGestures
+
+        // Indeces for each gesture
+        // 0 - Undo
+        // 1 - Redo
+
+        int numDGestures = 2;
+        allDGestures = new DiscreteGesture[numDGestures];
+
+        string stepGestureName = "";
+        UnitGesture stepGesture = new UnitGesture();
+
+        // Undo gesture (dominant hand)
+        DiscreteGesture Undo = new DiscreteGesture();                   // Create DiscreteGesture object for Undo
+        Undo.gestureName = "Undo";                                      // Assign "Undo" as name for discrete gesture
+        Undo.dominant = true;                                           // Indicate that this discrete gesture is for the dominant hand
+        Undo.gestureSeries = new UnitGesture[3];                        // Indicate that this discrete gesture has 3 steps
+        stepGesture = new UnitGesture();                                // Create first UnitGesture in this discrete gesture's series
+        stepGesture.name = "Undo0";                                     // Indicate that this is step 0 for "Undo"
+        stepGesture.thumbExtended = 0;                                  // For step 0, the thumb must be closed
+        stepGesture.handTipOpen = 0;                                    // For step 0, the hand tip must be closed
+        stepGesture.palmOrientation = "towards";                        // For step 0, the palm must be facing towards the Kinect
+        Undo.gestureSeries[0] = stepGesture;                            // Assign step 0
+        stepGesture = new UnitGesture();                                // Create a new reference for stepGesture
+        stepGesture.name = "Undo1";                                     // Indicate that this is step 1 for "Undo"
+        stepGesture.thumbExtended = 1;                                  // For step 1, the thumb must be extended
+        stepGesture.handTipOpen = 0;                                    // For step 1, the hand tip must be closed
+        stepGesture.palmOrientation = "towards";                        // For step 1, the palm must be facing towards the Kinect
+        Undo.gestureSeries[1] = stepGesture;                            // Assign step 1
+        stepGesture = new UnitGesture();                                // Create a new reference for stepGesture
+        stepGesture.name = "Undo2";                                     // Indicate that this is step 2 for "Undo"
+        stepGesture.thumbExtended = 0;                                  // For step 2, the thumb must be closed
+        stepGesture.handTipOpen = 0;                                    // For step 2, the hand tip must be closed
+        stepGesture.palmOrientation = "towards";                        // For step 2, the palm must be facing towards the Kinect
+        Undo.gestureSeries[2] = stepGesture;                            // Assign step 2
+        stepGesture = new UnitGesture();                                // Create a new reference for stepGesture
+        allDGestures[0] = Undo;                                         // Assign Undo to index 0 in allDGestures
+
+        // Redo gesture (dominant hand)
+        DiscreteGesture Redo = new DiscreteGesture();                   // Create DiscreteGesture object for Redo
+        Redo.gestureName = "Redo";                                      // Assign "Redo" as name for discrete gesture
+        Redo.dominant = true;                                           // Indicate that this discrete gesture is for the dominant hand
+        Redo.gestureSeries = new UnitGesture[3];                        // Indicate that this discrete gesture has 3 steps
+        stepGesture = new UnitGesture();                                // Create first UnitGesture in this discrete gesture's series
+        stepGesture.name = "Redo0";                                     // Indicate that this is step 0 for "Redo"
+        stepGesture.thumbExtended = 0;                                  // For step 0, the thumb must be closed
+        stepGesture.handTipOpen = 0;                                    // For step 0, the hand tip must be closed
+        stepGesture.palmOrientation = "away";                           // For step 0, the palm must be facing towards the Kinect
+        Redo.gestureSeries[0] = stepGesture;                            // Assign step 0
+        stepGesture = new UnitGesture();                                // Create a new reference for stepGesture
+        stepGesture.name = "Redo1";                                     // Indicate that this is step 1 for "Redo"
+        stepGesture.thumbExtended = 1;                                  // For step 1, the thumb must be extended
+        stepGesture.handTipOpen = 0;                                    // For step 1, the hand tip must be closed
+        stepGesture.palmOrientation = "away";                           // For step 1, the palm must be facing towards the Kinect
+        Redo.gestureSeries[1] = stepGesture;                            // Assign step 1
+        stepGesture = new UnitGesture();                                // Create a new reference for stepGesture
+        stepGesture.name = "Redo2";                                     // Indicate that this is step 2 for "Redo"
+        stepGesture.thumbExtended = 0;                                  // For step 2, the thumb must be closed
+        stepGesture.handTipOpen = 0;                                    // For step 2, the hand tip must be closed
+        stepGesture.palmOrientation = "away";                           // For step 2, the palm must be facing towards the Kinect
+        Redo.gestureSeries[2] = stepGesture;                            // Assign step 2
+        stepGesture = new UnitGesture();                                // Create a new reference for stepGesture
+        allDGestures[1] = Redo;                                         // Assign Redo to index 0 in allDGestures
+
     }
 
     void Start()
