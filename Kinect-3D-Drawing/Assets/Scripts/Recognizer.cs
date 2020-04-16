@@ -330,7 +330,18 @@ public class Recognizer : MonoBehaviour
     // Returns string for the palm orientation
     public string getPalmOrientation(Kinect.Body b, string side)
     {
-        return "neither";
+        string orientation = "neither";
+        
+        if(Vector3.Angle(getPalmNormal(b, side), Vector3.back) < 60.0)
+        {
+            orientation = "towards";
+        }
+        if(Vector3.Angle(getPalmNormal(b, side), Vector3.back) > 120.0)
+        {
+            orientation = "away";
+        }
+
+        return orientation;
     }
 
     public void FrameCheck(Kinect.Body b)
@@ -533,7 +544,7 @@ public class Recognizer : MonoBehaviour
             currentNonDominantGesture = "Neutral";
         }
 
-        Debug.Log(currentDominantGesture);
+        //Debug.Log(currentDominantGesture);
         //Debug.Log(lastAvg);
     }
 }
