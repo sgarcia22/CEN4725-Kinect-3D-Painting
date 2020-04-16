@@ -55,7 +55,6 @@ public class Recognizer : MonoBehaviour
         public double minPalmYaw;       // Min possible matching palm yaw
         public double maxPalmYaw;       // Max possible matching palm yaw
 
-        // Returns true if the pattern matches the unit gesture thresholds
         public double matches(HandPattern inputHandPattern)
         {
             double matchingShapes = 0;
@@ -321,29 +320,46 @@ public class Recognizer : MonoBehaviour
     }
 
     // Gets the angles for the hand joint
-    public double[] getHandAngles(Kinect.Body b, string side)
+    public Vector3 getPalmNormal(Kinect.Body b, string side)
     {
         Kinect.Joint handJoint;
+        Kinect.Joint handTipJoint;
+        Kinect.Joint thumbJoint;
 
         if(side == "right")
         {
             handJoint = b.Joints[Kinect.JointType.HandRight];
+            handTipJoint = b.Joints[Kinect.JointType.HandTipRight];
+            thumbJoint = b.Joints[Kinect.JointType.ThumbRight];
         }
         else
         {
             handJoint = b.Joints[Kinect.JointType.HandLeft];
+            handTipJoint = b.Joints[Kinect.JointType.HandTipLeft];
+            thumbJoint = b.Joints[Kinect.JointType.ThumbLeft];
         }
 
-        // Determine angle relative to x-axis
+        // Get positions of each relevant joint
         Vector3 handJointVector = bodyview.GetVector3FromJoint(handJoint);
-        Vector3 x_axis = new Vector3(1000, handJointVector.y, handJointVector.z);
+        Vector3 handTipJointVector = bodyview.GetVector3FromJoint(handTipJoint);
+        Vector3 thumbJointVector = bodyview.GetVector3FromJoint(thumbJoint);
 
-        if (side == "right")
+        // Find two vectors in the palm plane
+        Vector3 handToThumbVector = thumbJointVector - handJointVector;
+        Vector3 handToTipVector = handTipJointVector - handJointVector;
+
+        // Find the normal vector to the palm (cross product)
+        Vector3 palmNormalVector;
+        if(side == "right")
         {
-            //Debug.Log(Vector3.Angle(x_axis, handJointVector));
+            palmNormalVector = Vector3.Cross(handToThumbVector, handToTipVector);
+        }
+        else
+        {
+            palmNormalVector = Vector3.Cross(handToTipVector, handToThumbVector);
         }
 
-        return null;
+        return palmNormalVector;
     }
 
     public void FrameCheck(Kinect.Body b)
@@ -357,7 +373,6 @@ public class Recognizer : MonoBehaviour
         side = "left";
         thumbExtended = checkThumbExtended(b, "left");
         handTipOpen = checkHandTipOpen(b, "left");
-        palmPitchRollYaw = getHandAngles(b, "left");
         HandShape leftShape = new HandShape();
 
         leftShape.side = side;
@@ -389,7 +404,6 @@ public class Recognizer : MonoBehaviour
         side = "right";
         thumbExtended = checkThumbExtended(b, "right");
         handTipOpen = checkHandTipOpen(b, "right");
-        palmPitchRollYaw = getHandAngles(b, "right");
         HandShape rightShape = new HandShape();
 
         rightShape.side = side;
