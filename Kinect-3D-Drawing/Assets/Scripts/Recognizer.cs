@@ -176,7 +176,7 @@ public class Recognizer : MonoBehaviour
         // 2 - Draw
         // 3 - Erase
 
-        int numCGestures = 4;
+        int numCGestures = 8;
         allCGestures = new ContinuousGesture[numCGestures];
 
         string gestureName;
@@ -234,8 +234,61 @@ public class Recognizer : MonoBehaviour
         Erase.triggerGesture = triggerGesture;                          // Assign triggerGesture to Erase 
         allCGestures[3] = Erase;                                        // Add Erase to allCGestures
 
+        // RotateClockwise (non-dominant)
+        gestureName = "RotateClockwise";
+        dominant = false;
+        triggerGesture = new UnitGesture();
+        triggerGesture.thumbExtended = 1;
+        triggerGesture.handTipOpen = 0;
+        triggerGesture.palmOrientation = "irrelevant";
+        triggerGesture.extendedThumbElevation = "left";
+        ContinuousGesture RotateClockwise = new ContinuousGesture();
+        RotateClockwise.gestureName = gestureName;
+        RotateClockwise.dominant = dominant;
+        RotateClockwise.triggerGesture = triggerGesture;
+        allCGestures[4] = RotateClockwise;
 
+        // RotateCounterClockwise (non-dominant)
+        gestureName = "RotateCounterClockwise";
+        dominant = false;
+        triggerGesture = new UnitGesture();
+        triggerGesture.thumbExtended = 1;
+        triggerGesture.handTipOpen = 0;
+        triggerGesture.palmOrientation = "irrelevant";
+        triggerGesture.extendedThumbElevation = "right";
+        ContinuousGesture RotateCounterClockwise = new ContinuousGesture();
+        RotateCounterClockwise.gestureName = gestureName;
+        RotateCounterClockwise.dominant = dominant;
+        RotateCounterClockwise.triggerGesture = triggerGesture;
+        allCGestures[5] = RotateCounterClockwise;
 
+        // ZoomIn (non-dominant)
+        gestureName = "ZoomIn";
+        dominant = false;
+        triggerGesture = new UnitGesture();
+        triggerGesture.thumbExtended = 1;
+        triggerGesture.handTipOpen = 0;
+        triggerGesture.palmOrientation = "irrelevant";
+        triggerGesture.extendedThumbElevation = "up";
+        ContinuousGesture ZoomIn = new ContinuousGesture();
+        ZoomIn.gestureName = gestureName;
+        ZoomIn.dominant = dominant;
+        ZoomIn.triggerGesture = triggerGesture;
+        allCGestures[6] = ZoomIn;
+
+        // ZoomOut (non-dominant)
+        gestureName = "ZoomOut";
+        dominant = false;
+        triggerGesture = new UnitGesture();
+        triggerGesture.thumbExtended = 1;
+        triggerGesture.handTipOpen = 0;
+        triggerGesture.palmOrientation = "irrelevant";
+        triggerGesture.extendedThumbElevation = "down";
+        ContinuousGesture ZoomOut = new ContinuousGesture();
+        ZoomOut.gestureName = gestureName;
+        ZoomOut.dominant = dominant;
+        ZoomOut.triggerGesture = triggerGesture;
+        allCGestures[7] = ZoomOut;
 
 
         // Initialize all DiscreteGesture objects within allDGestures
@@ -976,6 +1029,7 @@ public class Recognizer : MonoBehaviour
             if (!allDGestures[triggeredDiscreteGesture].timedOut)
             {
                 setReadyDiscreteGesture(allDGestures[triggeredDiscreteGesture].gestureName);
+                Debug.Log(allDGestures[triggeredDiscreteGesture].gestureName + "!");
                 allDGestures[triggeredDiscreteGesture].timedOut = true;
                 allDGestures[triggeredDiscreteGesture].triggeredAt = cycle;
                 allDGestures[triggeredDiscreteGesture].triggeredRecently = true;
@@ -986,7 +1040,7 @@ public class Recognizer : MonoBehaviour
         //Debug.Log("Undo0: " + Undo0.matches(dominantHandPattern) + " | Undo1: " + Undo1.matches(dominantHandPattern));
         //Debug.Log("Redo0: " + Redo0.matches(dominantHandPattern) + " | Redo1: " + Redo1.matches(dominantHandPattern));
 
-        //Debug.Log(currentDominantGesture);
+        Debug.Log("Dominant: " + currentDominantGesture + " | Non-dominant " + currentNonDominantGesture);
         //Debug.Log(lastAvg);
     }
 }
