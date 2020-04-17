@@ -1029,7 +1029,7 @@ public class Recognizer : MonoBehaviour
             if (!allDGestures[triggeredDiscreteGesture].timedOut)
             {
                 setReadyDiscreteGesture(allDGestures[triggeredDiscreteGesture].gestureName);
-                Debug.Log(allDGestures[triggeredDiscreteGesture].gestureName + "!");
+                //Debug.Log(allDGestures[triggeredDiscreteGesture].gestureName + "!");
                 allDGestures[triggeredDiscreteGesture].timedOut = true;
                 allDGestures[triggeredDiscreteGesture].triggeredAt = cycle;
                 allDGestures[triggeredDiscreteGesture].triggeredRecently = true;
@@ -1040,7 +1040,7 @@ public class Recognizer : MonoBehaviour
         //Debug.Log("Undo0: " + Undo0.matches(dominantHandPattern) + " | Undo1: " + Undo1.matches(dominantHandPattern));
         //Debug.Log("Redo0: " + Redo0.matches(dominantHandPattern) + " | Redo1: " + Redo1.matches(dominantHandPattern));
 
-        Debug.Log("Dominant: " + currentDominantGesture + " | Non-dominant " + currentNonDominantGesture);
+        //Debug.Log("Dominant: " + currentDominantGesture + " | Non-dominant " + currentNonDominantGesture);
         //Debug.Log(lastAvg);
     }
 }

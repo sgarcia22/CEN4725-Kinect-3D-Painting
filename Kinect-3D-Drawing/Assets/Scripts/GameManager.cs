@@ -101,7 +101,7 @@ public class GameManager : MonoBehaviour
 
             Kinect.Body b = body.Value.body;
             recognizer.Recognize(b);
-            string rightHandState = b.HandRightState.ToString();
+            string rightHandState = recognizer.getRightHandGesture();
             if (rightHandState == "Unknown" || rightHandState == "NotTracked") rightHandState = "Neutral";
 
             if (handStates.Count > maxListCount)
@@ -174,11 +174,11 @@ public class GameManager : MonoBehaviour
     {
         switch (state)
         {
-            case "Closed":
+            case "Neutral":
                 return Neutral();
-            case "Lasso":
+            case "Draw":
                 return Draw();
-            case "Open":
+            case "Erase":
                 return Erase();
             case "Zooming":
                 return Zoom();

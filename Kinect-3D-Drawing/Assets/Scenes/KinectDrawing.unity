@@ -725,7 +725,7 @@ MonoBehaviour:
   recognizer: {fileID: 1212964638}
   threshold: 50
   frameDelay: 15
-  maxListCount: 30
+  maxListCount: 100
   bodyView: {fileID: 112136120}
 --- !u!4 &1212964635
 Transform:
@@ -786,13 +786,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bodyview: {fileID: 112136120}
-  neutralDText: {fileID: 1626081404}
-  neutralNDText: {fileID: 1017657597}
-  drawText: {fileID: 452241308}
-  eraseText: {fileID: 1133937340}
+  handLength: 0
   userDominantHandSide: 
   currentDominantGesture: 
   currentNonDominantGesture: 
+  triggeredDiscreteGesture: 0
+  readyDiscreteGesture: 
+  cycle: 0
+  lengthCount: 0
 --- !u!1 &1423513578
 GameObject:
   m_ObjectHideFlags: 0
