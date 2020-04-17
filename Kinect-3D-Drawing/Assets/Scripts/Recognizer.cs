@@ -115,6 +115,9 @@ public class Recognizer : MonoBehaviour
     {
         public string gestureName;          // Name / identifier of this gesture
         public bool dominant;               // True if dominant hand
+        public bool timedOut;               // True if this gesture cannot be triggered (timed out)
+        public bool triggeredRecently;      // True if this gesture has been triggered in the current cycle
+        public int triggeredAt;             // The cycle time at which this gesture was triggered (-1 if not timed out)
         public UnitGesture[] gestureSeries; // Array of all unit gestures that make up this discrete gesture’s series
     }
 
@@ -127,10 +130,11 @@ public class Recognizer : MonoBehaviour
     public QuickHandPattern rightQuickPattern;  // QuickHandPattern object for the user's right hand
     public ContinuousGesture[] allCGestures;    // Array containing all ContinuousGesture objects implemented in the project
     public DiscreteGesture[] allDGestures;      // Array containing all DiscreteGesture objects implemented in the project
-    public string triggeredDiscreteGesture;     // String containing name of triggered (but not yet run) discrete gesture (blank if no new trigger)
+    public int triggeredDiscreteGesture;        // String containing index of triggered (but not yet run) discrete gesture (blank if no new trigger)
+    public string readyDiscreteGesture;         // The name of the discrete gesture that has been most recently triggered but not yet called by an outside source
+    public int cycle;                           // Tracks cycles for discrete gestures
 
     // For testing
-    public int triggerCount = 0;
     public UnitGesture Undo0;
     public UnitGesture Undo1;
     public UnitGesture Redo0;
@@ -156,7 +160,9 @@ public class Recognizer : MonoBehaviour
         rightQuickPattern = new QuickHandPattern();
         rightQuickPattern.side = "right";
 
-        triggeredDiscreteGesture = "";          // No currently triggered discrete gesture
+        triggeredDiscreteGesture = -1;          // No currently triggered discrete gesture
+        readyDiscreteGesture = "";
+        cycle = -1;                             // Start with cycle -1 since the cycle count increments in the beginning
 
         handLength = 0.8215; // Default hand length for development
         lengthCount = 1;
@@ -247,7 +253,10 @@ public class Recognizer : MonoBehaviour
         DiscreteGesture Undo = new DiscreteGesture();                   // Create DiscreteGesture object for Undo
         Undo.gestureName = "Undo";                                      // Assign "Undo" as name for discrete gesture
         Undo.dominant = true;                                           // Indicate that this discrete gesture is for the dominant hand
-        Undo.gestureSeries = new UnitGesture[3];                        // Indicate that this discrete gesture has 3 steps
+        Undo.timedOut = false;                                          // Not timed out at the start
+        Undo.triggeredAt = -1;                                          // Not timed out
+        Undo.triggeredRecently = false;                                 // Not timed out
+        Undo.gestureSeries = new UnitGesture[2];                        // Indicate that this discrete gesture has 3 steps
         stepGesture = new UnitGesture();                                // Create first UnitGesture in this discrete gesture's series
         
         stepGesture.name = "Undo0";                                     // Indicate that this is step 0 for "Undo"
@@ -287,7 +296,7 @@ public class Recognizer : MonoBehaviour
         {
             stepGesture.extendedThumbElevation = "right";
         }
-        Undo.gestureSeries[2] = stepGesture;                            // Assign step 2
+        //Undo.gestureSeries[2] = stepGesture;                            // Assign step 2
         stepGesture = new UnitGesture();                                // Create a new reference for stepGesture
 
         allDGestures[0] = Undo;                                         // Assign Undo to index 0 in allDGestures
@@ -296,7 +305,10 @@ public class Recognizer : MonoBehaviour
         DiscreteGesture Redo = new DiscreteGesture();                   // Create DiscreteGesture object for Redo
         Redo.gestureName = "Redo";                                      // Assign "Redo" as name for discrete gesture
         Redo.dominant = true;                                           // Indicate that this discrete gesture is for the dominant hand
-        Redo.gestureSeries = new UnitGesture[3];                        // Indicate that this discrete gesture has 3 steps
+        Redo.timedOut = false;                                          // Not timed out at the start
+        Redo.triggeredAt = -1;                                          // Not timed out
+        Redo.triggeredRecently = false;                                 // Not timed out
+        Redo.gestureSeries = new UnitGesture[2];                        // Indicate that this discrete gesture has 3 steps
         stepGesture = new UnitGesture();                                // Create first UnitGesture in this discrete gesture's series
 
         stepGesture.name = "Redo0";                                     // Indicate that this is step 0 for "Redo"
@@ -336,7 +348,7 @@ public class Recognizer : MonoBehaviour
         {
             stepGesture.extendedThumbElevation = "right";
         }
-        Redo.gestureSeries[2] = stepGesture;                            // Assign step 2
+        //Redo.gestureSeries[2] = stepGesture;                          // Assign step 2
         stepGesture = new UnitGesture();                                // Create a new reference for stepGesture
 
         allDGestures[1] = Redo;                                         // Assign Redo to index 0 in allDGestures
@@ -587,6 +599,43 @@ public class Recognizer : MonoBehaviour
         return extendedThumbElevation;
     }
 
+    public string getLeftHandGesture()
+    {
+        if(userDominantHandSide == "right")
+        {
+            return currentNonDominantGesture;
+        }
+        else
+        {
+            return currentDominantGesture;
+        }
+    }
+
+    public string getRightHandGesture()
+    {
+        if(userDominantHandSide == "right")
+        {
+            return currentDominantGesture;
+        }
+        else
+        {
+            return currentNonDominantGesture;
+        }
+    }
+
+    public void setReadyDiscreteGesture(string input_string)
+    {
+        readyDiscreteGesture = input_string;
+    }
+
+    public string checkForDiscreteGesture()
+    {
+        //Debug.Log(readyDiscreteGesture + "!");
+        string output_string = readyDiscreteGesture;
+        readyDiscreteGesture = "";                      // Reset upon outside source looking in
+        return output_string;
+    }
+
     public void FrameCheck(Kinect.Body b)
     {
         string side;
@@ -684,10 +733,33 @@ public class Recognizer : MonoBehaviour
     }
 
     // Update is called once per frame
-    public void Test(Kinect.Body b)
+    public void Recognize(Kinect.Body b)
     {
         // Update global HandPattern objects
         FrameCheck(b);
+
+        // Increment cycle and discrete gestures
+        cycle++;
+        triggeredDiscreteGesture = -1;
+        if(cycle >= 1000)
+        {
+            cycle = 0;
+            for(int i = 0; i < allDGestures.Length; i++)
+            {
+                if(allDGestures[i].triggeredRecently)
+                {
+                    allDGestures[i].triggeredRecently = false;
+                }
+            }
+        }
+        for (int i = 0; i < allDGestures.Length; i++)
+        {
+            if (!allDGestures[i].triggeredRecently && allDGestures[i].timedOut && allDGestures[i].triggeredAt >= cycle)
+            {
+                allDGestures[i].timedOut = false;
+                allDGestures[i].triggeredAt = -1;
+            }
+        }
 
         Kinect.Joint handJoint = b.Joints[Kinect.JointType.HandRight];
         Vector3 handJointVector = bodyview.GetVector3FromJoint(handJoint);
@@ -743,6 +815,8 @@ public class Recognizer : MonoBehaviour
             dominantQuickHandPattern = leftQuickPattern;
             nonDominantQuickHandPattern = rightQuickPattern;
         }
+
+        int dgIndex = 0;
 
         // Scan for each possible discrete gesture
         foreach (DiscreteGesture dg in allDGestures)
@@ -809,12 +883,14 @@ public class Recognizer : MonoBehaviour
             }
             if(allStepsMet)
             {
-                triggeredDiscreteGesture = dg.gestureName;
+                triggeredDiscreteGesture = dgIndex;
                 for(int i = 0; i < dg.gestureSeries.Length; i++)
                 {
                     dg.gestureSeries[i].isMet = false;
                 }
             }
+
+            dgIndex++;
         }
 
         for (int i = 0; i < allCGestures.Length; i++)
@@ -894,16 +970,18 @@ public class Recognizer : MonoBehaviour
             currentNonDominantGesture = "Neutral";
         }
 
-        if(triggeredDiscreteGesture != "")
+
+        if(triggeredDiscreteGesture > -1)
         {
-            Debug.Log(triggeredDiscreteGesture + "!");
-            triggerCount++;
-            triggeredDiscreteGesture = "";
-            if(triggeredDiscreteGesture != "")
+            if (!allDGestures[triggeredDiscreteGesture].timedOut)
             {
-               //Debug.Log("True!");
+                setReadyDiscreteGesture(allDGestures[triggeredDiscreteGesture].gestureName);
+                allDGestures[triggeredDiscreteGesture].timedOut = true;
+                allDGestures[triggeredDiscreteGesture].triggeredAt = cycle;
+                allDGestures[triggeredDiscreteGesture].triggeredRecently = true;
             }
         }
+        
 
         //Debug.Log("Undo0: " + Undo0.matches(dominantHandPattern) + " | Undo1: " + Undo1.matches(dominantHandPattern));
         //Debug.Log("Redo0: " + Redo0.matches(dominantHandPattern) + " | Redo1: " + Redo1.matches(dominantHandPattern));

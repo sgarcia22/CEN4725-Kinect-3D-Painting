@@ -100,7 +100,7 @@ public class GameManager : MonoBehaviour
             if (handCount.Count == 0) frameCount = 0;
 
             Kinect.Body b = body.Value.body;
-            recognizer.Test(b);
+            recognizer.Recognize(b);
             string rightHandState = b.HandRightState.ToString();
             if (rightHandState == "Unknown" || rightHandState == "NotTracked") rightHandState = "Neutral";
 
