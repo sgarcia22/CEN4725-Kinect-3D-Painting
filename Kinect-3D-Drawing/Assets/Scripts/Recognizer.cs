@@ -290,7 +290,6 @@ public class Recognizer : MonoBehaviour
         ZoomOut.triggerGesture = triggerGesture;
         allCGestures[7] = ZoomOut;
 
-
         // Initialize all DiscreteGesture objects within allDGestures
 
         // Indeces for each gesture
@@ -451,21 +450,9 @@ public class Recognizer : MonoBehaviour
         Vector3 handCenterVector = Vector3.MoveTowards(handJointVector, handTipJointVector, (float)(handLength / 2.3));
 
         if (Vector3.Distance(handCenterVector, thumbJointVector) > threshold)
-        {
-            if (side == "right")
-            {
-                //Debug.Log("True");
-            }
             return true;
-        }
         else
-        {
-            if (side == "right")
-            {
-                //Debug.Log("False");
-            }
             return false;
-        }
     }
 
     // Returns true if the hand's tip is open is extended (determined by "side")
@@ -676,19 +663,21 @@ public class Recognizer : MonoBehaviour
         }
     }
 
+    //Set discrete gesture
     public void setReadyDiscreteGesture(string input_string)
     {
         readyDiscreteGesture = input_string;
     }
 
+    //Get discrete gesture
     public string checkForDiscreteGesture()
     {
-        //Debug.Log(readyDiscreteGesture + "!");
         string output_string = readyDiscreteGesture;
         readyDiscreteGesture = "";                      // Reset upon outside source looking in
         return output_string;
     }
 
+    //Check the current frame with Kinect body
     public void FrameCheck(Kinect.Body b)
     {
         string side;
@@ -698,8 +687,8 @@ public class Recognizer : MonoBehaviour
 
         // Add newest values to leftPattern
         side = "left";
-        thumbExtended = checkThumbExtended(b, "left");
-        handTipOpen = checkHandTipOpen(b, "left");
+        thumbExtended = checkThumbExtended(b, side);
+        handTipOpen = checkHandTipOpen(b, side);
         HandShape leftShape = new HandShape();
 
         leftShape.side = side;
@@ -724,11 +713,11 @@ public class Recognizer : MonoBehaviour
             leftShape.handTipOpen = 0;
         }
 
-        leftShape.palmOrientation = getPalmOrientation(b, "left");
+        leftShape.palmOrientation = getPalmOrientation(b, side);
 
         if(leftShape.thumbExtended == 1)
         {
-            leftShape.extendedThumbElevation = getExtendedThumbElevation(b, "left");
+            leftShape.extendedThumbElevation = getExtendedThumbElevation(b, side);
         }
         else
         {
@@ -737,8 +726,8 @@ public class Recognizer : MonoBehaviour
 
         // Add newest values to rightPattern
         side = "right";
-        thumbExtended = checkThumbExtended(b, "right");
-        handTipOpen = checkHandTipOpen(b, "right");
+        thumbExtended = checkThumbExtended(b, side);
+        handTipOpen = checkHandTipOpen(b, side);
         HandShape rightShape = new HandShape();
 
         rightShape.side = side;
@@ -763,19 +752,16 @@ public class Recognizer : MonoBehaviour
             rightShape.handTipOpen = 0;
         }
 
-        rightShape.palmOrientation = getPalmOrientation(b, "right");
+        rightShape.palmOrientation = getPalmOrientation(b, side);
 
         if (rightShape.thumbExtended == 1)
         {
-            rightShape.extendedThumbElevation = getExtendedThumbElevation(b, "right");
+            rightShape.extendedThumbElevation = getExtendedThumbElevation(b, side);
         }
         else
         {
             rightShape.extendedThumbElevation = "closed";
         }
-
-        //Debug.Log("LH: " + getHandDirection(b, "left") + " | RH: " + getHandDirection(b, "right"));
-        //Debug.Log(rightShape.extendedThumbElevation);
 
         // Add the new HandShape objects to the HandPattern objects
         leftPattern.add(leftShape);
@@ -785,7 +771,7 @@ public class Recognizer : MonoBehaviour
         rightQuickPattern.add(rightShape);
     }
 
-    // Update is called once per frame
+    // Called once per frame
     public void Recognize(Kinect.Body b)
     {
         // Update global HandPattern objects
@@ -794,6 +780,7 @@ public class Recognizer : MonoBehaviour
         // Increment cycle and discrete gestures
         cycle++;
         triggeredDiscreteGesture = -1;
+
         if(cycle >= 1000)
         {
             cycle = 0;
@@ -805,6 +792,7 @@ public class Recognizer : MonoBehaviour
                 }
             }
         }
+
         for (int i = 0; i < allDGestures.Length; i++)
         {
             if (!allDGestures[i].triggeredRecently && allDGestures[i].timedOut && allDGestures[i].triggeredAt >= cycle)
@@ -829,8 +817,8 @@ public class Recognizer : MonoBehaviour
 
         // Update hand length estimate
         double undividedSum = handLength * lengthCount;  // Multiply handLength by lengthCount to find the value of the previous sum before division
-        undividedSum = undividedSum + newLength;    // Add new distance to undivided sum
-        handLength = undividedSum / (lengthCount + 1);    // Divide by new count to get average
+        undividedSum = undividedSum + newLength;         // Add new distance to undivided sum
+        handLength = undividedSum / (lengthCount + 1);   // Divide by new count to get average
         
         // There's a cap to how large lengthCount can get,
         // preventing subsequent hand size estimates from having too little weight
@@ -858,6 +846,7 @@ public class Recognizer : MonoBehaviour
 
         QuickHandPattern dominantQuickHandPattern = new QuickHandPattern();
         QuickHandPattern nonDominantQuickHandPattern = new QuickHandPattern();
+
         if (userDominantHandSide == "right")
         {
             dominantQuickHandPattern = rightQuickPattern;
@@ -929,7 +918,6 @@ public class Recognizer : MonoBehaviour
             {
                 if(!dg.gestureSeries[i].isMet)
                 {
-                    //Debug.Log(dg.gestureSeries[i].name);
                     allStepsMet = false;
                     break;
                 }
@@ -1029,18 +1017,10 @@ public class Recognizer : MonoBehaviour
             if (!allDGestures[triggeredDiscreteGesture].timedOut)
             {
                 setReadyDiscreteGesture(allDGestures[triggeredDiscreteGesture].gestureName);
-                //Debug.Log(allDGestures[triggeredDiscreteGesture].gestureName + "!");
                 allDGestures[triggeredDiscreteGesture].timedOut = true;
                 allDGestures[triggeredDiscreteGesture].triggeredAt = cycle;
                 allDGestures[triggeredDiscreteGesture].triggeredRecently = true;
             }
         }
-        
-
-        //Debug.Log("Undo0: " + Undo0.matches(dominantHandPattern) + " | Undo1: " + Undo1.matches(dominantHandPattern));
-        //Debug.Log("Redo0: " + Redo0.matches(dominantHandPattern) + " | Redo1: " + Redo1.matches(dominantHandPattern));
-
-        //Debug.Log("Dominant: " + currentDominantGesture + " | Non-dominant " + currentNonDominantGesture);
-        //Debug.Log(lastAvg);
     }
 }
