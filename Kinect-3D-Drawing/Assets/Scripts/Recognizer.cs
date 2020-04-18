@@ -415,9 +415,8 @@ public class Recognizer : MonoBehaviour
     // Returns true if the hand's thumb is extended (determined by "side")
     public bool checkThumbExtended(Kinect.Body b, string side)
     {
-        // Experimentally, the ratio to determine the threshold was found
-        // to be best at about 0.7304 times the hand length
-        double threshold = 0.7304 * handLength;
+        // Based on a ratio
+        double threshold = 0.8 * handLength;
 
         Kinect.Joint handJoint;
         Kinect.Joint handTipJoint;
@@ -953,7 +952,6 @@ public class Recognizer : MonoBehaviour
 
         string bestGestureName = "Neutral";
         double bestGestureScore = 0.0;
-        bool foundGestureGreaterThan40 = false;
 
         // Find the current dominant gesture
         foreach (ContinuousGesture cg in allCGestures)
@@ -962,28 +960,28 @@ public class Recognizer : MonoBehaviour
             {
                 continue;
             }
-            if(cg.score > 40)
-            {
-                foundGestureGreaterThan40 = true;
-            }
             if (cg.score > bestGestureScore && cg.score > 40)
             {
                 bestGestureScore = cg.score;
                 bestGestureName = cg.gestureName;
             }
         }
-        if(foundGestureGreaterThan40)
+        if(bestGestureScore < 40)
+        {
+            currentDominantGesture = "Neutral";
+        }
+        else if(currentDominantGesture.Equals("Neutral"))
         {
             currentDominantGesture = bestGestureName;
         }
-        else
+        else if(!currentDominantGesture.Equals("Neutral") && bestGestureScore > 60)
         {
-            currentDominantGesture = "Neutral";
+            currentDominantGesture = bestGestureName;
         }
 
         bestGestureName = "Neutral";
         bestGestureScore = 0.0;
-        foundGestureGreaterThan40 = false;
+        bool foundGestureGreaterThan40 = false;
 
         // Find the current non-dominant gesture
         foreach (ContinuousGesture cg in allCGestures)
