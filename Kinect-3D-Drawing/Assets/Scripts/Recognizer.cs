@@ -8,6 +8,8 @@ public class Recognizer : MonoBehaviour
 {
     public BodySourceView bodyview;
     public double handLength; // Default hand length for development
+    public RawImage clearButton;
+    public Camera mainCamera;
 
     // HandShape depicts the shape of a user’s hand in one frame
     public class HandShape
@@ -134,6 +136,9 @@ public class Recognizer : MonoBehaviour
     public string readyDiscreteGesture;         // The name of the discrete gesture that has been most recently triggered but not yet called by an outside source
     public int cycle;                           // Tracks cycles for discrete gestures
 
+    public bool clearTriggered;
+    public int clearCount;
+
     // For testing
     public UnitGesture Undo0;
     public UnitGesture Undo1;
@@ -167,6 +172,7 @@ public class Recognizer : MonoBehaviour
         handLength = 0.8215; // Default hand length for development
         lengthCount = 1;
 
+        clearTriggered = false;
 
         // Initialize all ContinuousGesture objects within allCGestures
 
@@ -295,7 +301,7 @@ public class Recognizer : MonoBehaviour
         dominant = false;                                               
         triggerGesture = new UnitGesture();                             
         triggerGesture.name = gestureName;                              
-        triggerGesture.thumbExtended = 0;                               // The thumb must be closed
+        triggerGesture.thumbExtended = 1;                               // The thumb must be open
         triggerGesture.handTipOpen = 1;                                 // The hand tip must be open
         triggerGesture.palmOrientation = "irrelevant";                  // Palm orientation is not relevant to this gesture
         triggerGesture.extendedThumbElevation = "irrelevant";           // Thumb is not extended, so irrelevant
@@ -701,6 +707,48 @@ public class Recognizer : MonoBehaviour
         return output_string;
     }
 
+    // Returns true if the user's hand is hovering over a RawImage button
+    public bool checkIfOverRawImage(Kinect.Body b, RawImage button)
+    {
+        if(!currentNonDominantGesture.Equals("Select"))
+        {
+            return false;
+        }
+
+        Kinect.Joint handJoint = b.Joints[Kinect.JointType.HandLeft];
+        Vector3 handJointPosition = bodyview.GetVector3FromJoint(handJoint);
+        Vector3 buttonPosition = button.transform.position;
+        Vector3 cameraPosition = mainCamera.transform.position;
+
+        Vector3 handToButtonVector = buttonPosition - handJointPosition;
+        Vector3 cameraToButtonVector = buttonPosition - cameraPosition;
+
+
+        if(Vector3.Angle(handToButtonVector, cameraToButtonVector) < 1.7)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    // Returns true if a clear canvas signal should be triggered
+    public bool checkClear()
+    {
+        if(clearTriggered)
+        {
+            clearTriggered = false;
+            clearCount = 0;
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     //Check the current frame with Kinect body
     public void FrameCheck(Kinect.Body b)
     {
@@ -849,6 +897,20 @@ public class Recognizer : MonoBehaviour
         if(lengthCount < 4999)
         {
             lengthCount++;
+        }
+
+        // Button check
+        if(checkIfOverRawImage(b, clearButton))
+        {
+            clearCount++;
+            if(clearCount > 99)
+            {
+                clearTriggered = true;
+            }
+        }
+        else
+        {
+            clearCount = 0;
         }
 
         // Create new HandPattern objects for each hand
