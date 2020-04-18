@@ -846,7 +846,7 @@ public class Recognizer : MonoBehaviour
         
         // There's a cap to how large lengthCount can get,
         // preventing subsequent hand size estimates from having too little weight
-        if(lengthCount < 9999)
+        if(lengthCount < 4999)
         {
             lengthCount++;
         }
@@ -1045,8 +1045,5 @@ public class Recognizer : MonoBehaviour
                 allDGestures[triggeredDiscreteGesture].triggeredRecently = true;
             }
         }
-
-        Debug.Log(currentNonDominantGesture);
-        //Debug.Log("X: " + handJointVector.x + " | Y: " + handJointVector.y + " | Z: " + handJointVector.z);
     }
 }
