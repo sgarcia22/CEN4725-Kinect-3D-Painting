@@ -25,7 +25,6 @@ public class Erase : MonoBehaviour
     public void Eraser(int? index)
     {
         if (index.HasValue && index.Value != -1 && GameManager.Instance.CurrentState == ProcessState.Erasing) {
-            Debug.Log("Erasing");
             LineRenderer temp = spheres[index.Value].GetComponent<LineRenderer>();
             if (temp != null) temp.enabled = false;
             spheres[index.Value].SetActive(false);

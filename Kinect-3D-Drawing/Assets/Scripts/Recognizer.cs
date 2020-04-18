@@ -7,26 +7,22 @@ using Kinect = Windows.Kinect;
 public class Recognizer : MonoBehaviour
 {
     public BodySourceView bodyview;
-    public Text neutralDText;
-    public Text neutralNDText;
-    public Text drawText;
-    public Text eraseText;
+    public double handLength; // Default hand length for development
 
     // HandShape depicts the shape of a user’s hand in one frame
     public class HandShape
     {
-        public string side;         // “left” if left hand, “right” if right
-        public int thumbExtended;  // True (1) if the thumb joint is extended
-        public int handTipOpen;    // True (1) if the hand tip join is extended
-        public double palmPitch;    // Pitch of hand joint relative to Kinect
-        public double palmRoll;     // Roll of hand joint relative to Kinect
-        public double palmYaw;      // Yaw of hand joint relative to Kinect
+        public string side;                     // “left” if left hand, “right” if right
+        public int thumbExtended;               // True (1) if the thumb joint is extended
+        public int handTipOpen;                 // True (1) if the hand tip join is extended
+        public string palmOrientation;          // "towards" if the palm is facing the Kinect, "away" if the palm is facing away from the Kinect, "neither" if neither
+        public string extendedThumbElevation;   // "down" if thumb is extended downwards, "up" if thumb is extended upwards, "other" if other
     }
 
     // HandPattern depicts the shape of the user’s hand across 100 unity frames
     public class HandPattern
     {
-        public Queue<HandShape> pastShapes = new Queue<HandShape>();    // The queue containing the past 30 frames of hand shapes
+        public Queue<HandShape> pastShapes = new Queue<HandShape>();    // The queue containing the past 100(?) frames of hand shapes
         public HandShape previouslyAddedHandShape = new HandShape();    // The previous item to be added to pastShapes, i.e. the newest item in pastShapes
         public string side;                                             // “left” or “right” for the hand
 
@@ -44,21 +40,37 @@ public class Recognizer : MonoBehaviour
         }
     }
 
+    // A shorterm more current version of the HandPattern class with higher accuracy requirements (for discrete gestures)
+    public class QuickHandPattern
+    {
+        public Queue<HandShape> pastShapes = new Queue<HandShape>();    // The queue containing the past 20(?) frames of hand shapes
+        public HandShape previouslyAddedHandShape = new HandShape();    // The previous item to be added to pastShapes, i.e. the newest item in pastShapes
+        public string side;                                             // “left” or “right” for the hand
+
+        public void add(HandShape newestShape)
+        {
+            if (pastShapes.Count < 20)
+            {
+                pastShapes.Enqueue(newestShape);
+            }
+            else
+            {
+                pastShapes.Dequeue();
+                pastShapes.Enqueue(newestShape);
+            }
+        }
+    }
+
     // Unit gesture can be the trigger for a continuous gesture or part of a series trigger for a discrete gesture
     public class UnitGesture
     {
-        public string name;             // Name of the unit gesture
-        public int thumbExtended;		// 1 if thumb is extended, 0 if not, -1 if irrelevant
-        public int handTipOpen;			// 1 if hand tip is open, 0 if not, -1 if irrelevant
-        bool isMet;                     // Used for discrete gesture series
-        public double minPalmPitch;     // Min possible matching palm pitch
-        public double maxPalmPitch;     // Max possible matching palm pitch
-        public double minPalmRoll;      // Min possible matching palm roll
-        public double maxPalmRoll;      // Max possible matching palm roll
-        public double minPalmYaw;       // Min possible matching palm yaw
-        public double maxPalmYaw;       // Max possible matching palm yaw
+        public string name;                     // Name of the unit gesture
+        public int thumbExtended;		        // 1 if thumb is extended, 0 if not, -1 if irrelevant
+        public int handTipOpen;			        // 1 if hand tip is open, 0 if not, -1 if irrelevant
+        public bool isMet;                      // Used for discrete gesture series
+        public string palmOrientation;          // "towards" if the palm must face the Kinect, "away" if the palm must face away from the Kinect, "irrelevant" if irrelevant
+        public string extendedThumbElevation;   // "down" if thumb must be extended downwards, "up" if thumb must be extended upwards, "irrelevant" if irrelevant
 
-        // Returns true if the pattern matches the unit gesture thresholds
         public double matches(HandPattern inputHandPattern)
         {
             double matchingShapes = 0;
@@ -77,25 +89,12 @@ public class Recognizer : MonoBehaviour
                     continue;
                 }
 
-
-                // Check if the palm pitch is within the threshold
-                if (shape.palmPitch < minPalmPitch || shape.palmPitch > maxPalmPitch)
+                // Check if extended thumb is extended the correct way
+                if(extendedThumbElevation != "irrelevant" && extendedThumbElevation != shape.extendedThumbElevation)
                 {
                     continue;
                 }
 
-
-                // Check if the palm roll is within the threshold
-                if (shape.palmRoll < minPalmRoll || shape.palmRoll > maxPalmRoll)
-                {
-                    continue;
-                }
-
-                // Check if the palm yaw is within the threshold
-                if (shape.palmYaw < minPalmYaw || shape.palmYaw > maxPalmYaw)
-                {
-                    continue;
-                }
                 matchingShapes++;
             }
 
@@ -116,6 +115,9 @@ public class Recognizer : MonoBehaviour
     {
         public string gestureName;          // Name / identifier of this gesture
         public bool dominant;               // True if dominant hand
+        public bool timedOut;               // True if this gesture cannot be triggered (timed out)
+        public bool triggeredRecently;      // True if this gesture has been triggered in the current cycle
+        public int triggeredAt;             // The cycle time at which this gesture was triggered (-1 if not timed out)
         public UnitGesture[] gestureSeries; // Array of all unit gestures that make up this discrete gesture’s series
     }
 
@@ -124,26 +126,46 @@ public class Recognizer : MonoBehaviour
     public string currentNonDominantGesture;    // name of the active gesture for the user's non-dominant hand
     public HandPattern leftPattern;             // HandPattern object for the user's left hand
     public HandPattern rightPattern;            // HandPattern object for the user's right hand
+    public QuickHandPattern leftQuickPattern;   // QuickHandPattern object for the user's left hand
+    public QuickHandPattern rightQuickPattern;  // QuickHandPattern object for the user's right hand
     public ContinuousGesture[] allCGestures;    // Array containing all ContinuousGesture objects implemented in the project
     public DiscreteGesture[] allDGestures;      // Array containing all DiscreteGesture objects implemented in the project
+    public int triggeredDiscreteGesture;        // String containing index of triggered (but not yet run) discrete gesture (blank if no new trigger)
+    public string readyDiscreteGesture;         // The name of the discrete gesture that has been most recently triggered but not yet called by an outside source
+    public int cycle;                           // Tracks cycles for discrete gestures
+
+    // For testing
+    public UnitGesture Undo0;
+    public UnitGesture Undo1;
+    public UnitGesture Redo0;
+    public UnitGesture Redo1;
+
+    // Used to measure average hand distances to determine appropriate ratios
+    public double lengthCount;
 
     void Awake()
     {
         // Initialize most global variables
-        userDominantHandSide = "right";          // We're assuming the user is right-handed for now
+        userDominantHandSide = "right";         // We're assuming the user is right-handed for now
         currentDominantGesture = "Neutral";     // Default to the Neutral gesture
         currentNonDominantGesture = "Neutral";  // Default to the Neutral gesture
+
         leftPattern = new HandPattern();        // Create HandPattern object
         leftPattern.side = "left";              // Indicate that this HandPattern is for the left hand
         rightPattern = new HandPattern();       // Create HandPattern object
         rightPattern.side = "right";            // Indicate that this HandPattern is for the right hand
 
-        // Only for the demo
-        neutralDText.text = "Neutral:\t0";
-        neutralNDText.text = "Neutral:\t0";
-        drawText.text = "Draw:\t\t0";
-        eraseText.text = "Erase:\t\t0";
+        leftQuickPattern = new QuickHandPattern();
+        leftQuickPattern.side = "left";
+        rightQuickPattern = new QuickHandPattern();
+        rightQuickPattern.side = "right";
 
+        triggeredDiscreteGesture = -1;          // No currently triggered discrete gesture
+        readyDiscreteGesture = "";
+        cycle = -1;                             // Start with cycle -1 since the cycle count increments in the beginning
+
+        handLength = 0.8215; // Default hand length for development
+        lengthCount = 1;
 
 
         // Initialize all ContinuousGesture objects within allCGestures
@@ -154,7 +176,7 @@ public class Recognizer : MonoBehaviour
         // 2 - Draw
         // 3 - Erase
 
-        int numCGestures = 4;
+        int numCGestures = 8;
         allCGestures = new ContinuousGesture[numCGestures];
 
         string gestureName;
@@ -168,12 +190,8 @@ public class Recognizer : MonoBehaviour
         triggerGesture.name = gestureName;                              // Set triggerGesture to have the name "Neutral"
         triggerGesture.thumbExtended = 0;                               // The thumb must be closed
         triggerGesture.handTipOpen = 0;                                 // The hand tip must be closed
-        triggerGesture.minPalmPitch = 0.0;                              // Minimum palm pitch is 0 degrees
-        triggerGesture.maxPalmPitch = 360.0;                            // Maximum palm pitch is 360 degrees
-        triggerGesture.minPalmRoll = 0.0;                               // Minimum palm roll is 0 degrees
-        triggerGesture.maxPalmRoll = 360.0;                             // Maximum palm roll is 360 degrees
-        triggerGesture.minPalmYaw = 0.0;                                // Minimum palm yaw is 360 degrees
-        triggerGesture.maxPalmYaw = 360.0;                              // Maximum palm yaw is 360 degrees
+        triggerGesture.palmOrientation = "irrelevant";                  // Palm orientation is not relevant to this gesture
+        triggerGesture.extendedThumbElevation = "irrelevant";           // Thumb is not extended, so irrelevant
         ContinuousGesture NeutralDominant = new ContinuousGesture();    // Create new ContinuousGesture object
         NeutralDominant.gestureName = gestureName;                      // Assign "Neutral" to ContinuousGesture name
         NeutralDominant.dominant = dominant;                            // Indicate that this is for the dominant hand
@@ -193,12 +211,8 @@ public class Recognizer : MonoBehaviour
         triggerGesture.name = gestureName;                              // Set triggerGesture to have the name "Draw"
         triggerGesture.thumbExtended = 0;                               // The thumb must be closed
         triggerGesture.handTipOpen = 1;                                 // The hand tip must be open
-        triggerGesture.minPalmPitch = 0.0;                              // Minimum palm pitch is 0 degrees
-        triggerGesture.maxPalmPitch = 360.0;                            // Maximum palm pitch is 360 degrees
-        triggerGesture.minPalmRoll = 0.0;                               // Minimum palm roll is 0 degrees
-        triggerGesture.maxPalmRoll = 360.0;                             // Maximum palm roll is 360 degrees
-        triggerGesture.minPalmYaw = 0.0;                                // Minimum palm yaw is 360 degrees
-        triggerGesture.maxPalmYaw = 360.0;                              // Maximum palm yaw is 360 degrees
+        triggerGesture.palmOrientation = "irrelevant";                  // Palm orientation is not relevant to this gesture
+        triggerGesture.extendedThumbElevation = "irrelevant";           // Thumb is not extended, so irrelevant
         ContinuousGesture Draw = new ContinuousGesture();               // Create new ContinuousGesture object
         Draw.gestureName = gestureName;                                 // Assign "Draw" to ContinuousGesture name
         Draw.dominant = dominant;                                       // Indicate that this is for the dominant hand
@@ -212,17 +226,185 @@ public class Recognizer : MonoBehaviour
         triggerGesture.name = gestureName;                              // Set triggerGesture to have the name "Erase"
         triggerGesture.thumbExtended = 1;                               // The thumb must be extended
         triggerGesture.handTipOpen = 1;                                 // The hand tip must be open
-        triggerGesture.minPalmPitch = 0.0;                              // Minimum palm pitch is 0 degrees
-        triggerGesture.maxPalmPitch = 360.0;                            // Maximum palm pitch is 360 degrees
-        triggerGesture.minPalmRoll = 0.0;                               // Minimum palm roll is 0 degrees
-        triggerGesture.maxPalmRoll = 360.0;                             // Maximum palm roll is 360 degrees
-        triggerGesture.minPalmYaw = 0.0;                                // Minimum palm yaw is 360 degrees
-        triggerGesture.maxPalmYaw = 360.0;                              // Maximum palm yaw is 360 degrees
+        triggerGesture.palmOrientation = "irrelevant";                  // Palm orientation is not relevant to this gesture
+        triggerGesture.extendedThumbElevation = "irrelevant";           // Thumb position is not relevant
         ContinuousGesture Erase = new ContinuousGesture();              // Create new ContinuousGesture object
         Erase.gestureName = gestureName;                                // Assign "Erase" to ContinuousGesture name
         Erase.dominant = dominant;                                      // Indicate that this is for the dominant hand
         Erase.triggerGesture = triggerGesture;                          // Assign triggerGesture to Erase 
         allCGestures[3] = Erase;                                        // Add Erase to allCGestures
+
+        // RotateClockwise (non-dominant)
+        gestureName = "RotateClockwise";
+        dominant = false;
+        triggerGesture = new UnitGesture();
+        triggerGesture.thumbExtended = 1;
+        triggerGesture.handTipOpen = 0;
+        triggerGesture.palmOrientation = "irrelevant";
+        triggerGesture.extendedThumbElevation = "left";
+        ContinuousGesture RotateClockwise = new ContinuousGesture();
+        RotateClockwise.gestureName = gestureName;
+        RotateClockwise.dominant = dominant;
+        RotateClockwise.triggerGesture = triggerGesture;
+        allCGestures[4] = RotateClockwise;
+
+        // RotateCounterClockwise (non-dominant)
+        gestureName = "RotateCounterClockwise";
+        dominant = false;
+        triggerGesture = new UnitGesture();
+        triggerGesture.thumbExtended = 1;
+        triggerGesture.handTipOpen = 0;
+        triggerGesture.palmOrientation = "irrelevant";
+        triggerGesture.extendedThumbElevation = "right";
+        ContinuousGesture RotateCounterClockwise = new ContinuousGesture();
+        RotateCounterClockwise.gestureName = gestureName;
+        RotateCounterClockwise.dominant = dominant;
+        RotateCounterClockwise.triggerGesture = triggerGesture;
+        allCGestures[5] = RotateCounterClockwise;
+
+        // ZoomIn (non-dominant)
+        gestureName = "ZoomIn";
+        dominant = false;
+        triggerGesture = new UnitGesture();
+        triggerGesture.thumbExtended = 1;
+        triggerGesture.handTipOpen = 0;
+        triggerGesture.palmOrientation = "irrelevant";
+        triggerGesture.extendedThumbElevation = "up";
+        ContinuousGesture ZoomIn = new ContinuousGesture();
+        ZoomIn.gestureName = gestureName;
+        ZoomIn.dominant = dominant;
+        ZoomIn.triggerGesture = triggerGesture;
+        allCGestures[6] = ZoomIn;
+
+        // ZoomOut (non-dominant)
+        gestureName = "ZoomOut";
+        dominant = false;
+        triggerGesture = new UnitGesture();
+        triggerGesture.thumbExtended = 1;
+        triggerGesture.handTipOpen = 0;
+        triggerGesture.palmOrientation = "irrelevant";
+        triggerGesture.extendedThumbElevation = "down";
+        ContinuousGesture ZoomOut = new ContinuousGesture();
+        ZoomOut.gestureName = gestureName;
+        ZoomOut.dominant = dominant;
+        ZoomOut.triggerGesture = triggerGesture;
+        allCGestures[7] = ZoomOut;
+
+
+        // Initialize all DiscreteGesture objects within allDGestures
+
+        // Indeces for each gesture
+        // 0 - Undo
+        // 1 - Redo
+
+        int numDGestures = 2;
+        allDGestures = new DiscreteGesture[numDGestures];
+
+        UnitGesture stepGesture = new UnitGesture();
+
+        // Undo gesture (dominant)
+        DiscreteGesture Undo = new DiscreteGesture();                   // Create DiscreteGesture object for Undo
+        Undo.gestureName = "Undo";                                      // Assign "Undo" as name for discrete gesture
+        Undo.dominant = true;                                           // Indicate that this discrete gesture is for the dominant hand
+        Undo.timedOut = false;                                          // Not timed out at the start
+        Undo.triggeredAt = -1;                                          // Not timed out
+        Undo.triggeredRecently = false;                                 // Not timed out
+        Undo.gestureSeries = new UnitGesture[2];                        // Indicate that this discrete gesture has 3 steps
+        stepGesture = new UnitGesture();                                // Create first UnitGesture in this discrete gesture's series
+        
+        stepGesture.name = "Undo0";                                     // Indicate that this is step 0 for "Undo"
+        stepGesture.thumbExtended = 1;                                  // For step 0, the thumb must be extended
+        stepGesture.handTipOpen = 0;                                    // For step 0, the hand tip must be closed
+        stepGesture.palmOrientation = "irrelevant";
+        if (userDominantHandSide == "right")
+        {
+            stepGesture.extendedThumbElevation = "left";
+        }
+        else
+        {
+            stepGesture.extendedThumbElevation = "right";
+        }
+        Undo.gestureSeries[0] = stepGesture;                            // Assign step 0
+        Undo0 = stepGesture;
+        stepGesture = new UnitGesture();                                // Create a new reference for stepGesture
+
+        stepGesture.name = "Undo1";                                     // Indicate that this is step 1 for "Undo"
+        stepGesture.thumbExtended = 1;                                  // For step 1, the thumb must be extended
+        stepGesture.handTipOpen = 0;                                    // For step 1, the hand tip must be closed
+        stepGesture.palmOrientation = "irrelevant";                     // 
+        stepGesture.extendedThumbElevation = "down";                    // Thumb must be extended downwards
+        Undo.gestureSeries[1] = stepGesture;                            // Assign step 1
+        Undo1 = stepGesture;
+        stepGesture = new UnitGesture();                                // Create a new reference for stepGesture
+
+        stepGesture.name = "Undo2";                                     // Indicate that this is step 0 for "Undo"
+        stepGesture.thumbExtended = 1;                                  // For step 2, the thumb must be extended
+        stepGesture.handTipOpen = 0;                                    // For step 2, the hand tip must be closed
+        stepGesture.palmOrientation = "irrelevant";
+        if (userDominantHandSide == "right")
+        {
+            stepGesture.extendedThumbElevation = "left";
+        }
+        else
+        {
+            stepGesture.extendedThumbElevation = "right";
+        }
+        //Undo.gestureSeries[2] = stepGesture;                            // Assign step 2
+        stepGesture = new UnitGesture();                                // Create a new reference for stepGesture
+
+        allDGestures[0] = Undo;                                         // Assign Undo to index 0 in allDGestures
+
+        // Redo gesture (dominant)
+        DiscreteGesture Redo = new DiscreteGesture();                   // Create DiscreteGesture object for Redo
+        Redo.gestureName = "Redo";                                      // Assign "Redo" as name for discrete gesture
+        Redo.dominant = true;                                           // Indicate that this discrete gesture is for the dominant hand
+        Redo.timedOut = false;                                          // Not timed out at the start
+        Redo.triggeredAt = -1;                                          // Not timed out
+        Redo.triggeredRecently = false;                                 // Not timed out
+        Redo.gestureSeries = new UnitGesture[2];                        // Indicate that this discrete gesture has 3 steps
+        stepGesture = new UnitGesture();                                // Create first UnitGesture in this discrete gesture's series
+
+        stepGesture.name = "Redo0";                                     // Indicate that this is step 0 for "Redo"
+        stepGesture.thumbExtended = 1;                                  // For step 0, the thumb must be extended
+        stepGesture.handTipOpen = 0;                                    // For step 0, the hand tip must be closed
+        stepGesture.palmOrientation = "irrelevant";
+        if (userDominantHandSide == "right")
+        {
+            stepGesture.extendedThumbElevation = "left";
+        }
+        else
+        {
+            stepGesture.extendedThumbElevation = "right";
+        }
+        Redo.gestureSeries[0] = stepGesture;                            // Assign step 0
+        Redo0 = stepGesture;
+        stepGesture = new UnitGesture();                                // Create a new reference for stepGesture
+
+        stepGesture.name = "Redo1";                                     // Indicate that this is step 1 for "Redo"
+        stepGesture.thumbExtended = 1;                                  // For step 1, the thumb must be extended
+        stepGesture.handTipOpen = 0;                                    // For step 1, the hand tip must be closed
+        stepGesture.palmOrientation = "irrelevant";                     // 
+        stepGesture.extendedThumbElevation = "up";                      // Thumb must be extended upwards
+        Redo.gestureSeries[1] = stepGesture;                            // Assign step 1
+        Redo1 = stepGesture;
+        stepGesture = new UnitGesture();                                // Create a new reference for stepGesture
+
+        stepGesture.name = "Redo2";                                     // Indicate that this is step 0 for "Redo"
+        stepGesture.thumbExtended = 1;                                  // For step 2, the thumb must be extended
+        stepGesture.handTipOpen = 0;                                    // For step 2, the hand tip must be closed
+        stepGesture.palmOrientation = "irrelevant";
+        if (userDominantHandSide == "right")
+        {
+            stepGesture.extendedThumbElevation = "left";
+        }
+        else
+        {
+            stepGesture.extendedThumbElevation = "right";
+        }
+        //Redo.gestureSeries[2] = stepGesture;                          // Assign step 2
+        stepGesture = new UnitGesture();                                // Create a new reference for stepGesture
+
+        allDGestures[1] = Redo;                                         // Assign Redo to index 0 in allDGestures
 
     }
 
@@ -234,21 +416,24 @@ public class Recognizer : MonoBehaviour
     // Returns true if the hand's thumb is extended (determined by "side")
     public bool checkThumbExtended(Kinect.Body b, string side)
     {
-        // The threshold is to be determined by the length of the user's hand
-        // and the ratio of expected extended thumb distance to hand length
-        // However, a default threshold of 0.7 is used for the prototype   
-        double threshold = 0.6;
+        // Experimentally, the ratio to determine the threshold was found
+        // to be best at about 0.7304 times the hand length
+        double threshold = 0.7304 * handLength;
 
         Kinect.Joint handJoint;
+        Kinect.Joint handTipJoint;
         Kinect.Joint thumbJoint;
 
         Vector3 handJointVector;
+        Vector3 handTipJointVector;
         Vector3 thumbJointVector;
 
         if (side == "right")
         {
             handJoint = b.Joints[Kinect.JointType.HandRight];
             handJointVector = bodyview.GetVector3FromJoint(handJoint);
+            handTipJoint = b.Joints[Kinect.JointType.HandTipRight];
+            handTipJointVector = bodyview.GetVector3FromJoint(handTipJoint);
             thumbJoint = b.Joints[Kinect.JointType.ThumbRight];
             thumbJointVector = bodyview.GetVector3FromJoint(thumbJoint);
         }
@@ -256,16 +441,29 @@ public class Recognizer : MonoBehaviour
         {
             handJoint = b.Joints[Kinect.JointType.HandLeft];
             handJointVector = bodyview.GetVector3FromJoint(handJoint);
+            handTipJoint = b.Joints[Kinect.JointType.HandTipLeft];
+            handTipJointVector = bodyview.GetVector3FromJoint(handTipJoint);
             thumbJoint = b.Joints[Kinect.JointType.ThumbLeft];
             thumbJointVector = bodyview.GetVector3FromJoint(thumbJoint);
         }
 
-        if (Vector3.Distance(handJointVector, thumbJointVector) > threshold)
+        // Find the point one third of the distance from the hand joint to the hand tip joint
+        Vector3 handCenterVector = Vector3.MoveTowards(handJointVector, handTipJointVector, (float)(handLength / 2.3));
+
+        if (Vector3.Distance(handCenterVector, thumbJointVector) > threshold)
         {
+            if (side == "right")
+            {
+                //Debug.Log("True");
+            }
             return true;
         }
         else
         {
+            if (side == "right")
+            {
+                //Debug.Log("False");
+            }
             return false;
         }
     }
@@ -273,9 +471,9 @@ public class Recognizer : MonoBehaviour
     // Returns true if the hand's tip is open is extended (determined by "side")
     public bool checkHandTipOpen(Kinect.Body b, string side)
     {
-        // The threshold is to be determined by the length of the user's hand
-        // However, a default threshold of 0.6 is used for the prototype   
-        double threshold = 0.6;
+        // Experimentally, the ratio to determine the threshold was found
+        // to be best at about 0.7304 times the hand length
+        double threshold = 0.7304 * handLength;
 
         Kinect.Joint handJoint;
         Kinect.Joint handTipJoint;
@@ -289,7 +487,6 @@ public class Recognizer : MonoBehaviour
             handJointVector = bodyview.GetVector3FromJoint(handJoint);
             handTipJoint = b.Joints[Kinect.JointType.HandTipRight];
             handTipJointVector = bodyview.GetVector3FromJoint(handTipJoint);
-            //Debug.Log(Vector3.Distance(handJointVector, handTipJointVector));
         }
         else
         {
@@ -309,6 +506,189 @@ public class Recognizer : MonoBehaviour
         }
     }
 
+    // Gets the vector for the normal coming out of the palm
+    public Vector3 getPalmNormal(Kinect.Body b, string side)
+    {
+        Kinect.Joint handJoint;
+        Kinect.Joint handTipJoint;
+        Kinect.Joint thumbJoint;
+
+        if (side == "right")
+        {
+            handJoint = b.Joints[Kinect.JointType.HandRight];
+            handTipJoint = b.Joints[Kinect.JointType.HandTipRight];
+            thumbJoint = b.Joints[Kinect.JointType.ThumbRight];
+        }
+        else
+        {
+            handJoint = b.Joints[Kinect.JointType.HandLeft];
+            handTipJoint = b.Joints[Kinect.JointType.HandTipLeft];
+            thumbJoint = b.Joints[Kinect.JointType.ThumbLeft];
+        }
+
+        // Get positions of each relevant joint
+        Vector3 handJointVector = bodyview.GetVector3FromJoint(handJoint);
+        Vector3 handTipJointVector = bodyview.GetVector3FromJoint(handTipJoint);
+        Vector3 thumbJointVector = bodyview.GetVector3FromJoint(thumbJoint);
+
+        // Find two vectors in the palm plane
+        Vector3 handToThumbVector = thumbJointVector - handJointVector;
+        Vector3 handToTipVector = handTipJointVector - handJointVector;
+
+        // Find the normal vector to the palm (cross product)
+        Vector3 palmNormalVector;
+        if (side == "right")
+        {
+            palmNormalVector = Vector3.Cross(handToThumbVector, handToTipVector);
+        }
+        else
+        {
+            palmNormalVector = Vector3.Cross(handToTipVector, handToThumbVector);
+        }
+
+        return palmNormalVector;
+    }
+
+    // Returns string for the palm orientation
+    public string getPalmOrientation(Kinect.Body b, string side)
+    {
+        string orientation = "neither";
+
+        if (Vector3.Angle(getPalmNormal(b, side), Vector3.back) < 60.0)
+        {
+            orientation = "towards";
+        }
+        if (Vector3.Angle(getPalmNormal(b, side), Vector3.back) > 120.0)
+        {
+            orientation = "away";
+        }
+
+        return orientation;
+    }
+
+    // Returns the direction (relative to the Kinect) to which the hand is pointing
+    public string getHandDirection(Kinect.Body b, string side)
+    {
+        Kinect.Joint handJoint;
+        Kinect.Joint handTipJoint;
+
+        if (side == "right")
+        {
+            handJoint = b.Joints[Kinect.JointType.HandRight];
+            handTipJoint = b.Joints[Kinect.JointType.HandTipRight];
+        }
+        else
+        {
+            handJoint = b.Joints[Kinect.JointType.HandLeft];
+            handTipJoint = b.Joints[Kinect.JointType.HandTipLeft];
+        }
+
+        // Get positions of each relevant joint
+        Vector3 handJointVector = bodyview.GetVector3FromJoint(handJoint);
+        Vector3 handTipJointVector = bodyview.GetVector3FromJoint(handTipJoint);
+
+        // Get vector for hand direction
+        Vector3 handToTipVector = handTipJointVector - handJointVector;
+
+        string handDirection = "other";
+
+        // Find string for hand direction RELATIVE TO THE KINECT
+        if(Vector3.Angle(handToTipVector, Vector3.left) < 60.0)
+        {
+            handDirection = "left";
+        }
+        if(Vector3.Angle(handToTipVector, Vector3.right) < 60.0)
+        {
+            handDirection = "right";
+        }
+
+        return handDirection;
+    }
+
+    // Returns the direction in which the thumb is extended
+    public string getExtendedThumbElevation(Kinect.Body b, string side)
+    {
+        Kinect.Joint handJoint;
+        Kinect.Joint thumbJoint;
+
+        if (side == "right")
+        {
+            handJoint = b.Joints[Kinect.JointType.HandRight];
+            thumbJoint = b.Joints[Kinect.JointType.ThumbRight];
+        }
+        else
+        {
+            handJoint = b.Joints[Kinect.JointType.HandLeft];
+            thumbJoint = b.Joints[Kinect.JointType.ThumbLeft];
+        }
+
+        // Get positions of each relevant joint
+        Vector3 handJointVector = bodyview.GetVector3FromJoint(handJoint);
+        Vector3 thumbJointVector = bodyview.GetVector3FromJoint(thumbJoint);
+
+        // Find two vectors in the palm plane
+        Vector3 handToThumbVector = thumbJointVector - handJointVector;
+
+        string extendedThumbElevation = "other";
+
+        // Find string for hand direction RELATIVE TO THE KINECT
+        if (Vector3.Angle(handToThumbVector, Vector3.up) < 60.0)
+        {
+            extendedThumbElevation = "up";
+        }
+        if (Vector3.Angle(handToThumbVector, Vector3.down) < 60.0)
+        {
+            extendedThumbElevation = "down";
+        }
+        if (Vector3.Angle(handToThumbVector, Vector3.left) < 60.0)
+        {
+            extendedThumbElevation = "left";
+        }
+        if (Vector3.Angle(handToThumbVector, Vector3.right) < 60.0)
+        {
+            extendedThumbElevation = "right";
+        }
+
+        return extendedThumbElevation;
+    }
+
+    public string getLeftHandGesture()
+    {
+        if(userDominantHandSide == "right")
+        {
+            return currentNonDominantGesture;
+        }
+        else
+        {
+            return currentDominantGesture;
+        }
+    }
+
+    public string getRightHandGesture()
+    {
+        if(userDominantHandSide == "right")
+        {
+            return currentDominantGesture;
+        }
+        else
+        {
+            return currentNonDominantGesture;
+        }
+    }
+
+    public void setReadyDiscreteGesture(string input_string)
+    {
+        readyDiscreteGesture = input_string;
+    }
+
+    public string checkForDiscreteGesture()
+    {
+        //Debug.Log(readyDiscreteGesture + "!");
+        string output_string = readyDiscreteGesture;
+        readyDiscreteGesture = "";                      // Reset upon outside source looking in
+        return output_string;
+    }
+
     public void FrameCheck(Kinect.Body b)
     {
         string side;
@@ -320,8 +700,6 @@ public class Recognizer : MonoBehaviour
         side = "left";
         thumbExtended = checkThumbExtended(b, "left");
         handTipOpen = checkHandTipOpen(b, "left");
-        // Right now, we're not checking the values of the palm pitch, roll, and yaw
-        // because they are not relevant to the three implemented gestures
         HandShape leftShape = new HandShape();
 
         leftShape.side = side;
@@ -346,15 +724,21 @@ public class Recognizer : MonoBehaviour
             leftShape.handTipOpen = 0;
         }
 
-        // Right now, we're not adding the values of the palm pitch, roll, and yaw
-        // because they are not relevant to the three implemented gestures
+        leftShape.palmOrientation = getPalmOrientation(b, "left");
+
+        if(leftShape.thumbExtended == 1)
+        {
+            leftShape.extendedThumbElevation = getExtendedThumbElevation(b, "left");
+        }
+        else
+        {
+            leftShape.extendedThumbElevation = "closed";
+        }
 
         // Add newest values to rightPattern
         side = "right";
         thumbExtended = checkThumbExtended(b, "right");
         handTipOpen = checkHandTipOpen(b, "right");
-        // Right now, we're not checking the values of the palm pitch, roll, and yaw
-        // because they are not relevant to the three implemented gestures
         HandShape rightShape = new HandShape();
 
         rightShape.side = side;
@@ -379,19 +763,81 @@ public class Recognizer : MonoBehaviour
             rightShape.handTipOpen = 0;
         }
 
-        // Right now, we're not adding the values of the palm pitch, roll, and yaw
-        // because they are not relevant to the three implemented gestures
+        rightShape.palmOrientation = getPalmOrientation(b, "right");
+
+        if (rightShape.thumbExtended == 1)
+        {
+            rightShape.extendedThumbElevation = getExtendedThumbElevation(b, "right");
+        }
+        else
+        {
+            rightShape.extendedThumbElevation = "closed";
+        }
+
+        //Debug.Log("LH: " + getHandDirection(b, "left") + " | RH: " + getHandDirection(b, "right"));
+        //Debug.Log(rightShape.extendedThumbElevation);
 
         // Add the new HandShape objects to the HandPattern objects
         leftPattern.add(leftShape);
         rightPattern.add(rightShape);
+
+        leftQuickPattern.add(leftShape);
+        rightQuickPattern.add(rightShape);
     }
 
     // Update is called once per frame
-    public void Test(Kinect.Body b)
+    public void Recognize(Kinect.Body b)
     {
         // Update global HandPattern objects
         FrameCheck(b);
+
+        // Increment cycle and discrete gestures
+        cycle++;
+        triggeredDiscreteGesture = -1;
+        if(cycle >= 1000)
+        {
+            cycle = 0;
+            for(int i = 0; i < allDGestures.Length; i++)
+            {
+                if(allDGestures[i].triggeredRecently)
+                {
+                    allDGestures[i].triggeredRecently = false;
+                }
+            }
+        }
+        for (int i = 0; i < allDGestures.Length; i++)
+        {
+            if (!allDGestures[i].triggeredRecently && allDGestures[i].timedOut && allDGestures[i].triggeredAt >= cycle)
+            {
+                allDGestures[i].timedOut = false;
+                allDGestures[i].triggeredAt = -1;
+            }
+        }
+
+        Kinect.Joint handJoint = b.Joints[Kinect.JointType.HandRight];
+        Vector3 handJointVector = bodyview.GetVector3FromJoint(handJoint);
+        Kinect.Joint handTipJoint = b.Joints[Kinect.JointType.HandTipRight];
+        Vector3 handTipJointVector = bodyview.GetVector3FromJoint(handTipJoint);
+
+        double newLength = Vector3.Distance(handJointVector, handTipJointVector);
+
+        // Adjust newLength depending on Kinect-detected hand state
+        if(b.HandRightState.ToString() == "Closed")
+        {
+            newLength = newLength / 0.6814; // Experimentally-determined value
+        }
+
+        // Update hand length estimate
+        double undividedSum = handLength * lengthCount;  // Multiply handLength by lengthCount to find the value of the previous sum before division
+        undividedSum = undividedSum + newLength;    // Add new distance to undivided sum
+        handLength = undividedSum / (lengthCount + 1);    // Divide by new count to get average
+        
+        // There's a cap to how large lengthCount can get,
+        // preventing subsequent hand size estimates from having too little weight
+        if(lengthCount < 9999)
+        {
+            lengthCount++;
+        }
 
         // Create new HandPattern objects for each hand
         HandPattern dominantHandPattern = new HandPattern();
@@ -410,8 +856,95 @@ public class Recognizer : MonoBehaviour
             nonDominantHandPattern = rightPattern;
         }
 
-        // Code for discrete gestures will be placed here
-        // No discrete gestures are currently implemented
+        QuickHandPattern dominantQuickHandPattern = new QuickHandPattern();
+        QuickHandPattern nonDominantQuickHandPattern = new QuickHandPattern();
+        if (userDominantHandSide == "right")
+        {
+            dominantQuickHandPattern = rightQuickPattern;
+            nonDominantQuickHandPattern = leftQuickPattern;
+        }
+        else
+        {
+            dominantQuickHandPattern = leftQuickPattern;
+            nonDominantQuickHandPattern = rightQuickPattern;
+        }
+
+        int dgIndex = 0;
+
+        // Scan for each possible discrete gesture
+        foreach (DiscreteGesture dg in allDGestures)
+        {
+            // Determine which handPattern to check for this gesture
+            HandPattern checkPattern = new HandPattern();
+            if(dg.dominant)
+            {
+                checkPattern = dominantHandPattern;
+            }
+            else
+            {
+                checkPattern = nonDominantHandPattern;
+            }
+
+            // Find the index of the first non-met step in the series
+            int index = 0;
+            for(int i = 0; i < dg.gestureSeries.Length; i++)
+            {
+                if(!dg.gestureSeries[i].isMet)
+                {
+                    index = i;
+                    break;
+                }
+            }
+
+            // If the index is 0, simply check for a match
+            if(index == 0)
+            {
+                if (dg.gestureSeries[index].matches(checkPattern) > 15)
+                {
+                    dg.gestureSeries[index].isMet = true;
+                }
+            }
+
+            // If the index is greater than 0, check for a match
+            // If no match, check if the pattern still matches the previous step
+            // If neither, reset each step (break the chain)
+            if(index > 0)
+            {
+                if (dg.gestureSeries[index].matches(checkPattern) > 15)
+                {
+                    dg.gestureSeries[index].isMet = true;
+                }
+                else if(dg.gestureSeries[index-1].matches(checkPattern) <= 15)
+                {
+                    for (int i = 0; i < dg.gestureSeries.Length; i++)
+                    {
+                        dg.gestureSeries[i].isMet = false;
+                    }
+                }
+            }
+
+            // If all steps are met, set triggeredDiscreteGesture to the name of dg
+            bool allStepsMet = true;
+            for(int i = 0; i < dg.gestureSeries.Length; i++)
+            {
+                if(!dg.gestureSeries[i].isMet)
+                {
+                    //Debug.Log(dg.gestureSeries[i].name);
+                    allStepsMet = false;
+                    break;
+                }
+            }
+            if(allStepsMet)
+            {
+                triggeredDiscreteGesture = dgIndex;
+                for(int i = 0; i < dg.gestureSeries.Length; i++)
+                {
+                    dg.gestureSeries[i].isMet = false;
+                }
+            }
+
+            dgIndex++;
+        }
 
         for (int i = 0; i < allCGestures.Length; i++)
         {
@@ -432,6 +965,7 @@ public class Recognizer : MonoBehaviour
 
         string bestGestureName = "Neutral";
         double bestGestureScore = 0.0;
+        bool foundGestureGreaterThan40 = false;
 
         // Find the current dominant gesture
         foreach (ContinuousGesture cg in allCGestures)
@@ -440,16 +974,28 @@ public class Recognizer : MonoBehaviour
             {
                 continue;
             }
-            if (cg.score > bestGestureScore)
+            if(cg.score > 40)
+            {
+                foundGestureGreaterThan40 = true;
+            }
+            if (cg.score > bestGestureScore && cg.score > 40)
             {
                 bestGestureScore = cg.score;
                 bestGestureName = cg.gestureName;
             }
         }
-        currentDominantGesture = bestGestureName;
+        if(foundGestureGreaterThan40)
+        {
+            currentDominantGesture = bestGestureName;
+        }
+        else
+        {
+            currentDominantGesture = "Neutral";
+        }
 
         bestGestureName = "Neutral";
         bestGestureScore = 0.0;
+        foundGestureGreaterThan40 = false;
 
         // Find the current non-dominant gesture
         foreach (ContinuousGesture cg in allCGestures)
@@ -458,21 +1004,43 @@ public class Recognizer : MonoBehaviour
             {
                 continue;
             }
-            if (cg.score > bestGestureScore)
+            if (cg.score > 40)
+            {
+                foundGestureGreaterThan40 = true;
+            }
+            if (cg.score > bestGestureScore && cg.score > 40)
             {
                 bestGestureScore = cg.score;
                 bestGestureName = cg.gestureName;
             }
         }
-        currentNonDominantGesture = bestGestureName;
+        if (foundGestureGreaterThan40)
+        {
+            currentNonDominantGesture = bestGestureName;
+        }
+        else
+        {
+            currentNonDominantGesture = "Neutral";
+        }
 
-        // This is just hard-coded for the demo
-        // to demonstrate the experimental system
-        neutralDText.text = "Neutral:\t" + allCGestures[0].score.ToString();
-        neutralNDText.text = "Neutral:\t" + allCGestures[1].score.ToString();
-        drawText.text = "Draw:\t\t" + allCGestures[2].score.ToString();
-        eraseText.text = "Erase:\t\t" + allCGestures[3].score.ToString();
 
-        //Debug.Log(currentDominantGesture);
+        if(triggeredDiscreteGesture > -1)
+        {
+            if (!allDGestures[triggeredDiscreteGesture].timedOut)
+            {
+                setReadyDiscreteGesture(allDGestures[triggeredDiscreteGesture].gestureName);
+                //Debug.Log(allDGestures[triggeredDiscreteGesture].gestureName + "!");
+                allDGestures[triggeredDiscreteGesture].timedOut = true;
+                allDGestures[triggeredDiscreteGesture].triggeredAt = cycle;
+                allDGestures[triggeredDiscreteGesture].triggeredRecently = true;
+            }
+        }
+        
+
+        //Debug.Log("Undo0: " + Undo0.matches(dominantHandPattern) + " | Undo1: " + Undo1.matches(dominantHandPattern));
+        //Debug.Log("Redo0: " + Redo0.matches(dominantHandPattern) + " | Redo1: " + Redo1.matches(dominantHandPattern));
+
+        //Debug.Log("Dominant: " + currentDominantGesture + " | Non-dominant " + currentNonDominantGesture);
+        //Debug.Log(lastAvg);
     }
 }
