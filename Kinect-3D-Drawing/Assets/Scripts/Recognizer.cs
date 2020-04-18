@@ -176,7 +176,7 @@ public class Recognizer : MonoBehaviour
         // 2 - Draw
         // 3 - Erase
 
-        int numCGestures = 8;
+        int numCGestures = 9;
         allCGestures = new ContinuousGesture[numCGestures];
 
         string gestureName;
@@ -289,6 +289,21 @@ public class Recognizer : MonoBehaviour
         ZoomOut.dominant = dominant;
         ZoomOut.triggerGesture = triggerGesture;
         allCGestures[7] = ZoomOut;
+
+        // Select gesture (non-dominant)
+        gestureName = "Select";                                         
+        dominant = false;                                               
+        triggerGesture = new UnitGesture();                             
+        triggerGesture.name = gestureName;                              
+        triggerGesture.thumbExtended = 0;                               // The thumb must be closed
+        triggerGesture.handTipOpen = 1;                                 // The hand tip must be open
+        triggerGesture.palmOrientation = "irrelevant";                  // Palm orientation is not relevant to this gesture
+        triggerGesture.extendedThumbElevation = "irrelevant";           // Thumb is not extended, so irrelevant
+        ContinuousGesture Select = new ContinuousGesture();             
+        Select.gestureName = gestureName;                               
+        Select.dominant = dominant;                                     
+        Select.triggerGesture = triggerGesture;                          
+        allCGestures[8] = Select;                                       
 
         // Initialize all DiscreteGesture objects within allDGestures
 
@@ -1031,6 +1046,7 @@ public class Recognizer : MonoBehaviour
             }
         }
 
+        Debug.Log(currentNonDominantGesture);
         //Debug.Log("X: " + handJointVector.x + " | Y: " + handJointVector.y + " | Z: " + handJointVector.z);
     }
 }
