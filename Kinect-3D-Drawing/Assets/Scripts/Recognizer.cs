@@ -662,6 +662,16 @@ public class Recognizer : MonoBehaviour
         }
     }
 
+    public string getDominantHandGesture()
+    {
+        return currentDominantGesture;
+    }
+
+    public string getNonDominantHandGesture()
+    {
+        return currentNonDominantGesture;
+    }
+
     //Set discrete gesture
     public void setReadyDiscreteGesture(string input_string)
     {
@@ -1020,5 +1030,7 @@ public class Recognizer : MonoBehaviour
                 allDGestures[triggeredDiscreteGesture].triggeredRecently = true;
             }
         }
+
+        //Debug.Log("X: " + handJointVector.x + " | Y: " + handJointVector.y + " | Z: " + handJointVector.z);
     }
 }
