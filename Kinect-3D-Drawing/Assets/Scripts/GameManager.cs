@@ -50,17 +50,14 @@ public class GameManager : MonoBehaviour
         public int endIndex;
     }
 
-    [SerializeField]
-    private Drawing draw;
+    //Different referenced classes
+    [SerializeField] private Drawing draw;
     public Erase erase;
-    [SerializeField]
-    private Recognizer recognizer;
-    // Add other classes
 
-    [SerializeField]
-    private float threshold;
-    [SerializeField]
-    private int frameDelay, maxListCount;
+    [SerializeField] private Recognizer recognizer;
+
+    [SerializeField] private float threshold;
+    [SerializeField] private int frameDelay, maxListCount;
 
     public ProcessState CurrentState { get; set; }
     public BodySourceView bodyView;
@@ -87,13 +84,9 @@ public class GameManager : MonoBehaviour
         spheres = new List<GameObject>();
     }
 
-    private void Start()
-    {
-    }
-
     void Update()
     {
-        //Currently only doing Right Hand
+        //Get Kinect body data
         foreach (KeyValuePair<ulong, BodySourceView.BodyValue> body in bodyView.GetBodyGameObject())
         {
             //Reset frame count if just starting 
@@ -101,6 +94,7 @@ public class GameManager : MonoBehaviour
 
             Kinect.Body b = body.Value.body;
             recognizer.Recognize(b);
+
             string rightHandState = recognizer.getRightHandGesture();
             if (rightHandState == "Unknown" || rightHandState == "NotTracked") rightHandState = "Neutral";
 
