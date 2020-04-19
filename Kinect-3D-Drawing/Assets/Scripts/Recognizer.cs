@@ -140,6 +140,7 @@ public class Recognizer : MonoBehaviour
 
     public bool clearTriggered;
     public int clearCount;
+    public double clearThreshold;
 
     // For testing
     public UnitGesture Undo0;
@@ -175,6 +176,7 @@ public class Recognizer : MonoBehaviour
         lengthCount = 1;
 
         clearTriggered = false;
+        clearThreshold = 3.0;
 
         // Initialize all ContinuousGesture objects within allCGestures
 
@@ -709,7 +711,7 @@ public class Recognizer : MonoBehaviour
     }
 
     // Returns true if the user's hand is hovering over a RawImage button
-    public bool checkIfOverRawImage(Kinect.Body b, RawImage button)
+    public bool checkIfOverRawImage(Kinect.Body b, RawImage button, double angleThreshold)
     {
         if(!currentNonDominantGesture.Equals("Select"))
         {
@@ -725,7 +727,7 @@ public class Recognizer : MonoBehaviour
         Vector3 cameraToButtonVector = buttonPosition - cameraPosition;
 
 
-        if(Vector3.Angle(handToButtonVector, cameraToButtonVector) < 1.7)
+        if(Vector3.Angle(handToButtonVector, cameraToButtonVector) < angleThreshold)
         {
             return true;
         }
@@ -901,12 +903,12 @@ public class Recognizer : MonoBehaviour
         }
 
         // Button check
-        if(checkIfOverRawImage(b, clearButton))
+        if(checkIfOverRawImage(b, clearButton, clearThreshold))
         {
             clearCount++;
-            clearBar.size = (float)((float)clearCount / 100.0);
+            clearBar.size = (float)((float)clearCount / 150.0);
             clearBar.gameObject.SetActive(true);
-            if(clearCount > 99)
+            if(clearCount > 149)
             {
                 clearTriggered = true;
             }
