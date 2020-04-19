@@ -17,6 +17,8 @@ public class Drawing : MonoBehaviour
     public Material redLine;
     public Material greenLine;
     public Material purpleLine;
+    public Material blackLine;
+    public Material orangeLine;
 
     //private LineRenderer lr;
     private HandStates states;
@@ -76,6 +78,12 @@ public class Drawing : MonoBehaviour
                 break;
             case "Purple":
                 rendMaterial = purpleLine;
+                break;
+            case "Black":
+                rendMaterial = blackLine;
+                break;
+            case "Orange":
+                rendMaterial = orangeLine;
                 break;
         }
     }

@@ -20,11 +20,15 @@ public class Recognizer : MonoBehaviour
     public RawImage purpleButton;
     public RawImage blueButton;
     public RawImage greenButton;
+    public RawImage blackButton;
+    public RawImage orangeButton;
 
     public Material blueMaterial;
     public Material redMaterial;
     public Material greenMaterial;
     public Material purpleMaterial;
+    public Material blackMaterial;
+    public Material orangeMaterial;
 
     // HandShape depicts the shape of a user’s hand in one frame
     public class HandShape
@@ -193,8 +197,8 @@ public class Recognizer : MonoBehaviour
         clearThreshold = 3.0;
         colorButtonThreshold = 1.5;
 
-        currentColor = "Blue";
-        currentColorTextColor = blueMaterial.color;
+        currentColor = "Black";
+        currentColorTextColor = blackMaterial.color;
 
         // Initialize all ContinuousGesture objects within allCGestures
 
@@ -962,7 +966,17 @@ public class Recognizer : MonoBehaviour
         {
             currentColor = "Green";
             currentColorTextColor = greenMaterial.color;
-        } 
+        }
+        if(checkIfOverRawImage(b, blackButton, colorButtonThreshold))
+        {
+            currentColor = "Black";
+            currentColorTextColor = blackMaterial.color;
+        }
+        if (checkIfOverRawImage(b, orangeButton, colorButtonThreshold))
+        {
+            currentColor = "Orange";
+            currentColorTextColor = orangeMaterial.color;
+        }
 
         // Create new HandPattern objects for each hand
         HandPattern dominantHandPattern = new HandPattern();
@@ -1098,13 +1112,13 @@ public class Recognizer : MonoBehaviour
             {
                 continue;
             }
-            if (cg.score > bestGestureScore && cg.score > 40)
+            if (cg.score > bestGestureScore && cg.score > 33)
             {
                 bestGestureScore = cg.score;
                 bestGestureName = cg.gestureName;
             }
         }
-        if(bestGestureScore < 40)
+        if(bestGestureScore < 33)
         {
             currentDominantGesture = "Neutral";
         }
@@ -1112,7 +1126,7 @@ public class Recognizer : MonoBehaviour
         {
             currentDominantGesture = bestGestureName;
         }
-        else if(!currentDominantGesture.Equals("Neutral") && bestGestureScore > 60)
+        else if(!currentDominantGesture.Equals("Neutral") && bestGestureScore > 66)
         {
             currentDominantGesture = bestGestureName;
         }
@@ -1177,6 +1191,7 @@ public class Recognizer : MonoBehaviour
                 allDGestures[triggeredDiscreteGesture].triggeredRecently = true;
             }
         }
+        Debug.Log(currentNonDominantGesture);
         currentColorText.text = currentColor;
         currentColorText.color = currentColorTextColor;
     }
