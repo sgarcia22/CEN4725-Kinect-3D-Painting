@@ -17,14 +17,14 @@ public class Recognizer : MonoBehaviour
     public string currentColor;
 
     public RawImage redButton;
-    public RawImage yellowButton;
+    public RawImage purpleButton;
     public RawImage blueButton;
     public RawImage greenButton;
 
     public Material blueMaterial;
     public Material redMaterial;
     public Material greenMaterial;
-    public Material yellowMaterial;
+    public Material purpleMaterial;
 
     // HandShape depicts the shape of a user’s hand in one frame
     public class HandShape
@@ -953,10 +953,10 @@ public class Recognizer : MonoBehaviour
             currentColor = "Blue";
             currentColorTextColor = blueMaterial.color;
         }
-        if (checkIfOverRawImage(b, yellowButton, colorButtonThreshold))
+        if (checkIfOverRawImage(b, purpleButton, colorButtonThreshold))
         {
-            currentColor = "Yellow";
-            currentColorTextColor = yellowMaterial.color;
+            currentColor = "Purple";
+            currentColorTextColor = purpleMaterial.color;
         }
         if (checkIfOverRawImage(b, greenButton, colorButtonThreshold))
         {

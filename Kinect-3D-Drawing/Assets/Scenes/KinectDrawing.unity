@@ -450,7 +450,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -1067, y: -75}
+  m_AnchoredPosition: {x: -1054, y: -75}
   m_SizeDelta: {x: 400, y: 1300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &331088575
@@ -634,7 +634,7 @@ GameObject:
   - component: {fileID: 753022144}
   - component: {fileID: 753022143}
   m_Layer: 5
-  m_Name: YellowRawImage
+  m_Name: PurpleRawImage
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -677,7 +677,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 2800000, guid: 4b98ba9f024219f4fbec1cd30dc95a0e, type: 3}
+  m_Texture: {fileID: 2800000, guid: fa1af3fd384cff64c891f7fe77dfe042, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -726,7 +726,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -820, y: 491}
+  m_AnchoredPosition: {x: -835, y: 491}
   m_SizeDelta: {x: 300, y: 200}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &995485469
@@ -803,7 +803,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -1067, y: 157}
+  m_AnchoredPosition: {x: -1054, y: 157}
   m_SizeDelta: {x: 400, y: 1300}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1116166437
@@ -1035,7 +1035,7 @@ MonoBehaviour:
   blueLine: {fileID: 2100000, guid: fd082919b3b9774498295e110dc97e0c, type: 2}
   redLine: {fileID: 2100000, guid: 130c1b69d5631a04187c412b536ed97f, type: 2}
   greenLine: {fileID: 2100000, guid: 633a525e3cb0f9d41857f964bde74d41, type: 2}
-  yellowLine: {fileID: 2100000, guid: 66d890e1220c2c8489e3aac42de22dbd, type: 2}
+  purpleLine: {fileID: 2100000, guid: eaf6b3668e16d8e47b65643c3bb9ac01, type: 2}
 --- !u!114 &1212964637
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1072,13 +1072,13 @@ MonoBehaviour:
   currentColorTextColor: {r: 0, g: 0, b: 0, a: 0}
   currentColor: 
   redButton: {fileID: 324416253}
-  yellowButton: {fileID: 753022143}
+  purpleButton: {fileID: 753022143}
   blueButton: {fileID: 1657387973}
   greenButton: {fileID: 1816889554}
   blueMaterial: {fileID: 2100000, guid: fd082919b3b9774498295e110dc97e0c, type: 2}
   redMaterial: {fileID: 2100000, guid: 130c1b69d5631a04187c412b536ed97f, type: 2}
   greenMaterial: {fileID: 2100000, guid: 633a525e3cb0f9d41857f964bde74d41, type: 2}
-  yellowMaterial: {fileID: 2100000, guid: 66d890e1220c2c8489e3aac42de22dbd, type: 2}
+  purpleMaterial: {fileID: 2100000, guid: eaf6b3668e16d8e47b65643c3bb9ac01, type: 2}
   userDominantHandSide: 
   currentDominantGesture: 
   currentNonDominantGesture: 

@@ -16,7 +16,7 @@ public class Drawing : MonoBehaviour
     public Material blueLine;
     public Material redLine;
     public Material greenLine;
-    public Material yellowLine;
+    public Material purpleLine;
 
     //private LineRenderer lr;
     private HandStates states;
@@ -74,8 +74,8 @@ public class Drawing : MonoBehaviour
             case "Green":
                 rendMaterial = greenLine;
                 break;
-            case "Yellow":
-                rendMaterial = yellowLine;
+            case "Purple":
+                rendMaterial = purpleLine;
                 break;
         }
     }
