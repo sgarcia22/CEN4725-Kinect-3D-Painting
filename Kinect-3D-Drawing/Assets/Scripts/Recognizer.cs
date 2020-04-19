@@ -9,7 +9,29 @@ public class Recognizer : MonoBehaviour
     public BodySourceView bodyview;
     public double handLength; // Default hand length for development
     public RawImage clearButton;
+    public Scrollbar clearBar;
     public Camera mainCamera;
+
+    public Text leftHandCurrentGestureText;
+    public Text rightHandCurrentGestureText;
+
+    public Text currentColorText;
+    public Color currentColorTextColor;
+    public string currentColor;
+
+    public RawImage redButton;
+    public RawImage purpleButton;
+    public RawImage blueButton;
+    public RawImage greenButton;
+    public RawImage blackButton;
+    public RawImage orangeButton;
+
+    public Material blueMaterial;
+    public Material redMaterial;
+    public Material greenMaterial;
+    public Material purpleMaterial;
+    public Material blackMaterial;
+    public Material orangeMaterial;
 
     // HandShape depicts the shape of a user’s hand in one frame
     public class HandShape
@@ -138,6 +160,8 @@ public class Recognizer : MonoBehaviour
 
     public bool clearTriggered;
     public int clearCount;
+    public double clearThreshold;
+    public double colorButtonThreshold;
 
     // For testing
     public UnitGesture Undo0;
@@ -173,6 +197,11 @@ public class Recognizer : MonoBehaviour
         lengthCount = 1;
 
         clearTriggered = false;
+        clearThreshold = 3.0;
+        colorButtonThreshold = 1.5;
+
+        currentColor = "Black";
+        currentColorTextColor = blackMaterial.color;
 
         // Initialize all ContinuousGesture objects within allCGestures
 
@@ -437,7 +466,7 @@ public class Recognizer : MonoBehaviour
     public bool checkThumbExtended(Kinect.Body b, string side)
     {
         // Based on a ratio
-        double threshold = 0.8 * handLength;
+        double threshold = 0.9 * handLength;
 
         Kinect.Joint handJoint;
         Kinect.Joint handTipJoint;
@@ -478,9 +507,8 @@ public class Recognizer : MonoBehaviour
     // Returns true if the hand's tip is open is extended (determined by "side")
     public bool checkHandTipOpen(Kinect.Body b, string side)
     {
-        // Experimentally, the ratio to determine the threshold was found
-        // to be best at about 0.7304 times the hand length
-        double threshold = 0.7304 * handLength;
+        // Based on a ratio
+        double threshold = 0.825 * handLength;
 
         Kinect.Joint handJoint;
         Kinect.Joint handTipJoint;
@@ -708,7 +736,7 @@ public class Recognizer : MonoBehaviour
     }
 
     // Returns true if the user's hand is hovering over a RawImage button
-    public bool checkIfOverRawImage(Kinect.Body b, RawImage button)
+    public bool checkIfOverRawImage(Kinect.Body b, RawImage button, double angleThreshold)
     {
         if(!currentNonDominantGesture.Equals("Select"))
         {
@@ -724,7 +752,7 @@ public class Recognizer : MonoBehaviour
         Vector3 cameraToButtonVector = buttonPosition - cameraPosition;
 
 
-        if(Vector3.Angle(handToButtonVector, cameraToButtonVector) < 1.7)
+        if(Vector3.Angle(handToButtonVector, cameraToButtonVector) < angleThreshold)
         {
             return true;
         }
@@ -747,6 +775,11 @@ public class Recognizer : MonoBehaviour
         {
             return false;
         }
+    }
+
+    public string getColor()
+    {
+        return currentColor;
     }
 
     //Check the current frame with Kinect body
@@ -900,17 +933,52 @@ public class Recognizer : MonoBehaviour
         }
 
         // Button check
-        if(checkIfOverRawImage(b, clearButton))
+        if(checkIfOverRawImage(b, clearButton, clearThreshold))
         {
             clearCount++;
-            if(clearCount > 99)
+            clearBar.size = (float)((float)clearCount / 150.0);
+            clearBar.gameObject.SetActive(true);
+            if(clearCount > 149)
             {
                 clearTriggered = true;
             }
         }
         else
         {
+            clearBar.gameObject.SetActive(false);
             clearCount = 0;
+        }
+
+        // Check each color button
+        if (checkIfOverRawImage(b, redButton, colorButtonThreshold))
+        {
+            currentColor = "Red";
+            currentColorTextColor = redMaterial.color;
+        }
+        if (checkIfOverRawImage(b, blueButton, colorButtonThreshold))
+        {
+            currentColor = "Blue";
+            currentColorTextColor = blueMaterial.color;
+        }
+        if (checkIfOverRawImage(b, purpleButton, colorButtonThreshold))
+        {
+            currentColor = "Purple";
+            currentColorTextColor = purpleMaterial.color;
+        }
+        if (checkIfOverRawImage(b, greenButton, colorButtonThreshold))
+        {
+            currentColor = "Green";
+            currentColorTextColor = greenMaterial.color;
+        }
+        if(checkIfOverRawImage(b, blackButton, colorButtonThreshold))
+        {
+            currentColor = "Black";
+            currentColorTextColor = blackMaterial.color;
+        }
+        if (checkIfOverRawImage(b, orangeButton, colorButtonThreshold))
+        {
+            currentColor = "Orange";
+            currentColorTextColor = orangeMaterial.color;
         }
 
         // Create new HandPattern objects for each hand
@@ -1047,13 +1115,13 @@ public class Recognizer : MonoBehaviour
             {
                 continue;
             }
-            if (cg.score > bestGestureScore && cg.score > 40)
+            if (cg.score > bestGestureScore && cg.score > 33)
             {
                 bestGestureScore = cg.score;
                 bestGestureName = cg.gestureName;
             }
         }
-        if(bestGestureScore < 40)
+        if(bestGestureScore < 33)
         {
             currentDominantGesture = "Neutral";
         }
@@ -1061,9 +1129,19 @@ public class Recognizer : MonoBehaviour
         {
             currentDominantGesture = bestGestureName;
         }
-        else if(!currentDominantGesture.Equals("Neutral") && bestGestureScore > 60)
+        else if(!currentDominantGesture.Equals("Neutral") && bestGestureScore > 66)
         {
             currentDominantGesture = bestGestureName;
+        }
+
+        // A closed hand state overrides Recognizer's decision
+        if (b.HandRightState.ToString() == "Closed" && userDominantHandSide.Equals("right"))
+        {
+            currentDominantGesture = "Neutral";
+        }
+        if (b.HandLeftState.ToString() == "Closed" && userDominantHandSide.Equals("left"))
+        {
+            currentDominantGesture = "Neutral";
         }
 
         bestGestureName = "Neutral";
@@ -1096,8 +1174,17 @@ public class Recognizer : MonoBehaviour
             currentNonDominantGesture = "Neutral";
         }
 
+        // A closed hand state overrides Recognizer's decision
+        if (b.HandRightState.ToString() == "Closed" && userDominantHandSide.Equals("left"))
+        {
+            currentNonDominantGesture = "Neutral";
+        }
+        if (b.HandLeftState.ToString() == "Closed" && userDominantHandSide.Equals("right"))
+        {
+            currentNonDominantGesture = "Neutral";
+        }
 
-        if(triggeredDiscreteGesture > -1)
+        if (triggeredDiscreteGesture > -1)
         {
             if (!allDGestures[triggeredDiscreteGesture].timedOut)
             {
@@ -1107,5 +1194,14 @@ public class Recognizer : MonoBehaviour
                 allDGestures[triggeredDiscreteGesture].triggeredRecently = true;
             }
         }
+        currentColorText.text = currentColor;
+        currentColorText.color = currentColorTextColor;
+
+        if (getLeftHandGesture().Equals("Neutral")) leftHandCurrentGestureText.text = "";
+        else leftHandCurrentGestureText.text = getLeftHandGesture();
+
+        if (getRightHandGesture().Equals("Neutral")) rightHandCurrentGestureText.text = "";
+        else rightHandCurrentGestureText.text = getRightHandGesture();
+
     }
 }

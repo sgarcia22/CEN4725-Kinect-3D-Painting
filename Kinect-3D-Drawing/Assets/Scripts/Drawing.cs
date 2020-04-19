@@ -13,6 +13,13 @@ public class Drawing : MonoBehaviour
     public GameObject sphere, parent;
     public Material rendMaterial;
 
+    public Material blueLine;
+    public Material redLine;
+    public Material greenLine;
+    public Material purpleLine;
+    public Material blackLine;
+    public Material orangeLine;
+
     //private LineRenderer lr;
     private HandStates states;
     private int index;
@@ -53,6 +60,31 @@ public class Drawing : MonoBehaviour
         else
         {
             spheres.Add(temp);
+        }
+    }
+
+    public void ChangeColor(string newColor)
+    {
+        switch(newColor)
+        {
+            case "Blue":
+                rendMaterial = blueLine;
+                break;
+            case "Red":
+                rendMaterial = redLine;
+                break;
+            case "Green":
+                rendMaterial = greenLine;
+                break;
+            case "Purple":
+                rendMaterial = purpleLine;
+                break;
+            case "Black":
+                rendMaterial = blackLine;
+                break;
+            case "Orange":
+                rendMaterial = orangeLine;
+                break;
         }
     }
 
