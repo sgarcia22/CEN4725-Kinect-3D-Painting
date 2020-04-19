@@ -9,7 +9,9 @@ public class Recognizer : MonoBehaviour
     public BodySourceView bodyview;
     public double handLength; // Default hand length for development
     public RawImage clearButton;
+    public Scrollbar clearBar;
     public Camera mainCamera;
+
 
     // HandShape depicts the shape of a user’s hand in one frame
     public class HandShape
@@ -903,6 +905,8 @@ public class Recognizer : MonoBehaviour
         if(checkIfOverRawImage(b, clearButton))
         {
             clearCount++;
+            clearBar.size = (float)((float)clearCount / 100.0);
+            clearBar.gameObject.SetActive(true);
             if(clearCount > 99)
             {
                 clearTriggered = true;
@@ -910,6 +914,7 @@ public class Recognizer : MonoBehaviour
         }
         else
         {
+            clearBar.gameObject.SetActive(false);
             clearCount = 0;
         }
 
