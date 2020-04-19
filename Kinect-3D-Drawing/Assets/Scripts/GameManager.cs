@@ -94,6 +94,7 @@ public class GameManager : MonoBehaviour
 
             Kinect.Body b = body.Value.body;
             recognizer.Recognize(b);
+            if (recognizer.checkClear()) clearCanvas();
 
             string rightHandState = recognizer.getRightHandGesture();
             if (rightHandState == "Unknown" || rightHandState == "NotTracked") rightHandState = "Neutral";
@@ -136,6 +137,15 @@ public class GameManager : MonoBehaviour
                 frameCount = 0;
             }
             CallClass(body, strokeStart);
+        }
+    }
+
+    private void clearCanvas()
+    {
+        CurrentState = ProcessState.Erasing;
+        for(int i = 0; i < spheres.Count; i++)
+        {
+            erase.Eraser(i);
         }
     }
 
