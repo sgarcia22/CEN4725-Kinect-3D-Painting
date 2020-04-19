@@ -95,6 +95,7 @@ public class GameManager : MonoBehaviour
             Kinect.Body b = body.Value.body;
             recognizer.Recognize(b);
             if (recognizer.checkClear()) clearCanvas();
+            draw.ChangeColor(recognizer.getColor());
 
             string rightHandState = recognizer.getRightHandGesture();
             if (rightHandState == "Unknown" || rightHandState == "NotTracked") rightHandState = "Neutral";

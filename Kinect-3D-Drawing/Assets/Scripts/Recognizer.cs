@@ -12,6 +12,19 @@ public class Recognizer : MonoBehaviour
     public Scrollbar clearBar;
     public Camera mainCamera;
 
+    public Text currentColorText;
+    public Color currentColorTextColor;
+    public string currentColor;
+
+    public RawImage redButton;
+    public RawImage yellowButton;
+    public RawImage blueButton;
+    public RawImage greenButton;
+
+    public Material blueMaterial;
+    public Material redMaterial;
+    public Material greenMaterial;
+    public Material yellowMaterial;
 
     // HandShape depicts the shape of a user’s hand in one frame
     public class HandShape
@@ -141,6 +154,7 @@ public class Recognizer : MonoBehaviour
     public bool clearTriggered;
     public int clearCount;
     public double clearThreshold;
+    public double colorButtonThreshold;
 
     // For testing
     public UnitGesture Undo0;
@@ -177,6 +191,10 @@ public class Recognizer : MonoBehaviour
 
         clearTriggered = false;
         clearThreshold = 3.0;
+        colorButtonThreshold = 1.5;
+
+        currentColor = "Blue";
+        currentColorTextColor = blueMaterial.color;
 
         // Initialize all ContinuousGesture objects within allCGestures
 
@@ -752,6 +770,11 @@ public class Recognizer : MonoBehaviour
         }
     }
 
+    public string getColor()
+    {
+        return currentColor;
+    }
+
     //Check the current frame with Kinect body
     public void FrameCheck(Kinect.Body b)
     {
@@ -918,6 +941,28 @@ public class Recognizer : MonoBehaviour
             clearBar.gameObject.SetActive(false);
             clearCount = 0;
         }
+
+        // Check each color button
+        if (checkIfOverRawImage(b, redButton, colorButtonThreshold))
+        {
+            currentColor = "Red";
+            currentColorTextColor = redMaterial.color;
+        }
+        if (checkIfOverRawImage(b, blueButton, colorButtonThreshold))
+        {
+            currentColor = "Blue";
+            currentColorTextColor = blueMaterial.color;
+        }
+        if (checkIfOverRawImage(b, yellowButton, colorButtonThreshold))
+        {
+            currentColor = "Yellow";
+            currentColorTextColor = yellowMaterial.color;
+        }
+        if (checkIfOverRawImage(b, greenButton, colorButtonThreshold))
+        {
+            currentColor = "Green";
+            currentColorTextColor = greenMaterial.color;
+        } 
 
         // Create new HandPattern objects for each hand
         HandPattern dominantHandPattern = new HandPattern();
@@ -1113,5 +1158,7 @@ public class Recognizer : MonoBehaviour
                 allDGestures[triggeredDiscreteGesture].triggeredRecently = true;
             }
         }
+        currentColorText.text = currentColor;
+        currentColorText.color = currentColorTextColor;
     }
 }
