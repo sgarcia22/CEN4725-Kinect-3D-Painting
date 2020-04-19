@@ -12,6 +12,9 @@ public class Recognizer : MonoBehaviour
     public Scrollbar clearBar;
     public Camera mainCamera;
 
+    public Text leftHandCurrentGestureText;
+    public Text rightHandCurrentGestureText;
+
     public Text currentColorText;
     public Color currentColorTextColor;
     public string currentColor;
@@ -463,7 +466,7 @@ public class Recognizer : MonoBehaviour
     public bool checkThumbExtended(Kinect.Body b, string side)
     {
         // Based on a ratio
-        double threshold = 0.8 * handLength;
+        double threshold = 0.9 * handLength;
 
         Kinect.Joint handJoint;
         Kinect.Joint handTipJoint;
@@ -1191,8 +1194,14 @@ public class Recognizer : MonoBehaviour
                 allDGestures[triggeredDiscreteGesture].triggeredRecently = true;
             }
         }
-        Debug.Log(currentNonDominantGesture);
         currentColorText.text = currentColor;
         currentColorText.color = currentColorTextColor;
+
+        if (getLeftHandGesture().Equals("Neutral")) leftHandCurrentGestureText.text = "";
+        else leftHandCurrentGestureText.text = getLeftHandGesture();
+
+        if (getRightHandGesture().Equals("Neutral")) rightHandCurrentGestureText.text = "";
+        else rightHandCurrentGestureText.text = getRightHandGesture();
+
     }
 }
