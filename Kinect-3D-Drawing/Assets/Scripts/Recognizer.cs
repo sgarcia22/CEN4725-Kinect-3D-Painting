@@ -480,9 +480,8 @@ public class Recognizer : MonoBehaviour
     // Returns true if the hand's tip is open is extended (determined by "side")
     public bool checkHandTipOpen(Kinect.Body b, string side)
     {
-        // Experimentally, the ratio to determine the threshold was found
-        // to be best at about 0.7304 times the hand length
-        double threshold = 0.7304 * handLength;
+        // Based on a ratio
+        double threshold = 0.825 * handLength;
 
         Kinect.Joint handJoint;
         Kinect.Joint handTipJoint;
