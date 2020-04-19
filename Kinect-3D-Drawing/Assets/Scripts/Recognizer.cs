@@ -1117,6 +1117,16 @@ public class Recognizer : MonoBehaviour
             currentDominantGesture = bestGestureName;
         }
 
+        // A closed hand state overrides Recognizer's decision
+        if (b.HandRightState.ToString() == "Closed" && userDominantHandSide.Equals("right"))
+        {
+            currentDominantGesture = "Neutral";
+        }
+        if (b.HandLeftState.ToString() == "Closed" && userDominantHandSide.Equals("left"))
+        {
+            currentDominantGesture = "Neutral";
+        }
+
         bestGestureName = "Neutral";
         bestGestureScore = 0.0;
         bool foundGestureGreaterThan40 = false;
@@ -1147,8 +1157,17 @@ public class Recognizer : MonoBehaviour
             currentNonDominantGesture = "Neutral";
         }
 
+        // A closed hand state overrides Recognizer's decision
+        if (b.HandRightState.ToString() == "Closed" && userDominantHandSide.Equals("left"))
+        {
+            currentNonDominantGesture = "Neutral";
+        }
+        if (b.HandLeftState.ToString() == "Closed" && userDominantHandSide.Equals("right"))
+        {
+            currentNonDominantGesture = "Neutral";
+        }
 
-        if(triggeredDiscreteGesture > -1)
+        if (triggeredDiscreteGesture > -1)
         {
             if (!allDGestures[triggeredDiscreteGesture].timedOut)
             {
