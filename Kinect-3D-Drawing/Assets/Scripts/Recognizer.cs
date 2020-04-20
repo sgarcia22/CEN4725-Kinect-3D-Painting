@@ -7,7 +7,10 @@ using Kinect = Windows.Kinect;
 public class Recognizer : MonoBehaviour
 {
     public BodySourceView bodyview;
-    public double handLength; // Default hand length for development
+    public double handLength;
+    public int handLengthArrIndex;
+    public double[] handLengthArr;
+    public int handLengthArrSize;
     public RawImage clearButton;
     public Scrollbar clearBar;
     public Camera mainCamera;
@@ -169,9 +172,6 @@ public class Recognizer : MonoBehaviour
     public UnitGesture Redo0;
     public UnitGesture Redo1;
 
-    // Used to measure average hand distances to determine appropriate ratios
-    public double lengthCount;
-
     void Awake()
     {
         // Initialize most global variables
@@ -194,7 +194,14 @@ public class Recognizer : MonoBehaviour
         cycle = -1;                             // Start with cycle -1 since the cycle count increments in the beginning
 
         handLength = 0.8215; // Default hand length for development
-        lengthCount = 1;
+        handLengthArrIndex = 0;
+        handLengthArrSize = 100;    // The quantity of hand length samples in handLengthArr
+        handLengthArr = new double[handLengthArrSize];
+
+        for(int i = 0; i < handLengthArr.Length; i++)
+        {
+            handLengthArr[i] = handLength; // Initialize each sample
+        }
 
         clearTriggered = false;
         clearThreshold = 3.0;
@@ -917,19 +924,22 @@ public class Recognizer : MonoBehaviour
         // Adjust newLength depending on Kinect-detected hand state
         if(b.HandRightState.ToString() == "Closed")
         {
-            newLength = newLength / 0.6814; // Experimentally-determined value
+            newLength = newLength / 0.73; // Experimentally-determined value
         }
 
-        // Update hand length estimate
-        double undividedSum = handLength * lengthCount;  // Multiply handLength by lengthCount to find the value of the previous sum before division
-        undividedSum = undividedSum + newLength;         // Add new distance to undivided sum
-        handLength = undividedSum / (lengthCount + 1);   // Divide by new count to get average
-        
-        // There's a cap to how large lengthCount can get,
-        // preventing subsequent hand size estimates from having too little weight
-        if(lengthCount < 4999)
+        handLengthArr[handLengthArrIndex] = newLength;
+        handLengthArrIndex++;
+
+        // If the whole array has been iterated through, recalculate the average length
+        if(handLengthArrIndex > 99)
         {
-            lengthCount++;
+            double sumOfSamples = 0;
+            foreach(double sampleLength in handLengthArr)
+            {
+                sumOfSamples = sumOfSamples + sampleLength;
+            }
+            handLength = sumOfSamples / ((double)handLengthArrSize);
+            handLengthArrIndex = 0;
         }
 
         // Button check
