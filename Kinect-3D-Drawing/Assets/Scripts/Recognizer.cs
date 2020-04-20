@@ -936,9 +936,9 @@ public class Recognizer : MonoBehaviour
         if(checkIfOverRawImage(b, clearButton, clearThreshold))
         {
             clearCount++;
-            clearBar.size = (float)((float)clearCount / 150.0);
+            clearBar.size = (float)((float)clearCount / 100.0);
             clearBar.gameObject.SetActive(true);
-            if(clearCount > 149)
+            if(clearCount > 99)
             {
                 clearTriggered = true;
             }
