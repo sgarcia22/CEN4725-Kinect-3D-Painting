@@ -1265,10 +1265,12 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1212964635}
-  - component: {fileID: 1212964637}
-  - component: {fileID: 1212964636}
   - component: {fileID: 1212964634}
   - component: {fileID: 1212964638}
+  - component: {fileID: 1212964636}
+  - component: {fileID: 1212964637}
+  - component: {fileID: 1212964640}
+  - component: {fileID: 1212964639}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -1289,6 +1291,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   draw: {fileID: 1212964636}
+  zoom: {fileID: 1212964640}
+  rotate: {fileID: 1212964639}
   erase: {fileID: 1212964637}
   recognizer: {fileID: 1212964638}
   frameDelay: 5
@@ -1390,6 +1394,34 @@ MonoBehaviour:
   clearThreshold: 0
   colorButtonThreshold: 0
   lengthCount: 0
+--- !u!114 &1212964639
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1212964633}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2536c531393b44e4c9e776713e20d2b2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1212964640
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1212964633}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91d4f6a8a9e3ac342994c221441ab40f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  cam: {fileID: 1747301860}
+  maxZ: 10
+  minZ: -10
+  speed: 3
 --- !u!1 &1657387971
 GameObject:
   m_ObjectHideFlags: 0

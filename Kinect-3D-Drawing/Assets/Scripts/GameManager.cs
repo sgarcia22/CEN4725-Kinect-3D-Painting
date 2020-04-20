@@ -23,8 +23,10 @@ public enum ProcessState
     Neutral,
     Drawing,
     Erasing,
-    Zooming,
-    Rotating
+    ZoomIn,
+    ZoomOut,
+    RotateClockwise,
+    RotateCounterClockwise
 }
 
 public class GameManager : MonoBehaviour
@@ -47,18 +49,21 @@ public class GameManager : MonoBehaviour
 
     private class Strokes
     {
-        public int startIndex;
-        public int endIndex;
+        public int startIndex = -1;
+        public int endIndex = -1;
     }
 
     //Different referenced classes
     [SerializeField] private Drawing draw;
+    [SerializeField] private Zoom zoom;
+    [SerializeField] private Rotate rotate;
     public Erase erase;
     [SerializeField] private Recognizer recognizer;
 
     [SerializeField] private int frameDelay;
 
-    public ProcessState CurrentState { get; set; }
+    public ProcessState CurrentStateRight { get; set; }
+    public ProcessState CurrentStateLeft { get; set; }
     public BodySourceView bodyView;
 
     private List<Tuple<int, int>> strokesList; //Keep track of strokes
@@ -82,7 +87,7 @@ public class GameManager : MonoBehaviour
     private void Start()
     {
         frameCount = 0;
-        CurrentState = ProcessState.None;
+        CurrentStateRight = ProcessState.None;
     }
 
     void Update()
@@ -91,7 +96,7 @@ public class GameManager : MonoBehaviour
         foreach (KeyValuePair<ulong, BodySourceView.BodyValue> body in bodyView.GetBodyGameObject())
         {
 
-            if (CurrentState == ProcessState.None) frameCount = 0;
+            if (CurrentStateRight == ProcessState.None) frameCount = 0;
 
             Kinect.Body b = body.Value.body;
             recognizer.Recognize(b);
@@ -101,11 +106,15 @@ public class GameManager : MonoBehaviour
             draw.ChangeColor(recognizer.getColor());
 
             string rightHandState = recognizer.getRightHandGesture();
+            string leftHandState = recognizer.getLeftHandGesture();
 
             if (rightHandState == "Unknown" || rightHandState == "NotTracked") rightHandState = "Neutral";
+            if (leftHandState == "Unknown" || leftHandState == "NotTracked") leftHandState = "Neutral";
 
             //Determine if a new stroke has started
             bool strokeStart = DetermineStroke(GetState(rightHandState));
+            //Get state of left hand
+            CurrentStateLeft = GetState(leftHandState);
 
             //Call the appropriate functions
             CallClass(body.Value.body, strokeStart);
@@ -123,16 +132,16 @@ public class GameManager : MonoBehaviour
     private bool DetermineStroke(ProcessState state)
     {
         //Set previous and current states
-        ProcessState prev = CurrentState;
-        CurrentState = state;
+        ProcessState prev = CurrentStateRight;
+        CurrentStateRight = state;
 
         bool strokeStart = false;
-        if (prev != ProcessState.Drawing && CurrentState == ProcessState.Drawing && spheres.Count > 0)
+        if (prev != ProcessState.Drawing && CurrentStateRight == ProcessState.Drawing && spheres.Count > 0)
         {
             startingStrokeIndex = spheres.Count - 1;
             strokeStart = true;
         }
-        if (prev == ProcessState.Drawing && CurrentState != prev)
+        if (prev == ProcessState.Drawing && CurrentStateRight != prev)
         {
             Tuple<int, int> tempStroke = Tuple.Create(startingStrokeIndex, spheres.Count - 1);
             strokesList.Add(tempStroke);
@@ -143,7 +152,7 @@ public class GameManager : MonoBehaviour
 
     private void clearCanvas()
     {
-        CurrentState = ProcessState.Erasing;
+        CurrentStateRight = ProcessState.Erasing;
         for(int i = 0; i < spheres.Count; i++)
         {
             erase.Eraser(i);
@@ -164,10 +173,14 @@ public class GameManager : MonoBehaviour
                 return Draw();
             case "Erase":
                 return Erase();
-            case "Zooming":
-                return Zoom();
-            case "Rotating":
-                return Rotate();
+            case "ZoomIn":
+                return ZoomIn();
+            case "ZoomOut":
+                return ZoomOut();
+            case "RotateClockwise":
+                return RotateClockwise();
+            case "RotateCounterClockwise":
+                return RotateCounterClockwise();
             default:
                 return Neutral();
         }
@@ -179,7 +192,20 @@ public class GameManager : MonoBehaviour
     /// <param name="body">Kinect Body</param>
     private void CallClass(Kinect.Body body, bool strokeStart)
     {
-        switch (CurrentState)
+        switch (CurrentStateLeft)
+        {
+            case ProcessState.ZoomIn:
+                zoom.ZoomIn();
+                return;
+            case ProcessState.ZoomOut:
+                zoom.ZoomOut();
+                return;
+            case ProcessState.RotateClockwise:
+                break;
+            case ProcessState.RotateCounterClockwise:
+                break;
+        }
+        switch (CurrentStateRight)
         {
             case ProcessState.Neutral:
                 break;
@@ -189,10 +215,6 @@ public class GameManager : MonoBehaviour
                 break;
             case ProcessState.Erasing:
                 erase.Eraser(sphereCollidedIndex);
-                break;
-            case ProcessState.Zooming:
-                break;
-            case ProcessState.Rotating:
                 break;
         }
     }
@@ -207,6 +229,8 @@ public class GameManager : MonoBehaviour
     private ProcessState Neutral() { return ProcessState.Neutral; }
     private ProcessState Draw() { return ProcessState.Drawing; }
     private ProcessState Erase() { return ProcessState.Erasing; }
-    private ProcessState Zoom() { return ProcessState.Zooming; }
-    private ProcessState Rotate() { return ProcessState.Rotating; }
+    private ProcessState ZoomIn() { return ProcessState.ZoomIn; }
+    private ProcessState ZoomOut() { return ProcessState.ZoomOut; }
+    private ProcessState RotateClockwise() { return ProcessState.RotateClockwise; }
+    private ProcessState RotateCounterClockwise() { return ProcessState.RotateCounterClockwise; }
 }

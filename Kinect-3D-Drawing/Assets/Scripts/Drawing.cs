@@ -19,16 +19,12 @@ public class Drawing : MonoBehaviour
     public Material purpleLine;
     public Material blackLine;
     public Material orangeLine;
-
-    //private LineRenderer lr;
     private HandStates states;
-    private int index;
 
     private List<GameObject> spheres;
 
     void Start()
     {
-        //lr = GetComponent<LineRenderer>();
         states = new HandStates();
         InitializeVariables();
     }
@@ -36,8 +32,7 @@ public class Drawing : MonoBehaviour
     private void InitializeVariables()
     {
         spheres = GameManager.spheres;
-        //lr.positionCount = 1;
-        index = 0;
+
         drawing = false;
     }
 
