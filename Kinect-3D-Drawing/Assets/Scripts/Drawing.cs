@@ -42,27 +42,9 @@ public class Drawing : MonoBehaviour
     }
 
     /// <summary>
-    /// Draw with Line Renderer
-    /// Currently Right Hand Only
+    /// Change color of the Line Renderer
     /// </summary>
-    /// <param name="body">Represents the Kinect Body Data</param>
-    public void Draw(Kinect.Body b, bool strokeStart)
-    {
-        Kinect.Joint sourceJoint = b.Joints[Kinect.JointType.HandRight];
-        GameObject temp = Instantiate(sphere, bodyView.GetVector3FromJoint(sourceJoint), Quaternion.identity);
-        temp.transform.parent = parent.transform;
-        temp.GetComponent<SphereController>().index = spheres.Count;
-        if (spheres.Count != 0)
-        {
-            AddLineRenderer(temp, strokeStart);
-            spheres.Add(temp);
-        }
-        else
-        {
-            spheres.Add(temp);
-        }
-    }
-
+    /// <param name="newColor"></param>
     public void ChangeColor(string newColor)
     {
         switch(newColor)
@@ -88,9 +70,30 @@ public class Drawing : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Draw with Line Renderer
+    /// Currently Right Hand Only
+    /// </summary>
+    /// <param name="body">Represents the Kinect Body Data</param>
+    public void Draw(Kinect.Body b, bool strokeStart)
+    {
+        Kinect.Joint sourceJoint = b.Joints[Kinect.JointType.HandRight];
+        GameObject temp = Instantiate(sphere, bodyView.GetVector3FromJoint(sourceJoint), Quaternion.identity);
+        temp.transform.parent = parent.transform;
+        temp.GetComponent<SphereController>().index = spheres.Count;
+        if (spheres.Count != 0) AddLineRenderer(temp, strokeStart);
+        spheres.Add(temp);
+    }
+
+    /// <summary>
+    /// Add Line Renderer to newly created GameObject
+    /// </summary>
+    /// <param name="temp">Sphere Created</param>
+    /// <param name="strokeStart">Start of stroke</param>
     private void AddLineRenderer(GameObject temp, bool strokeStart)
     {
         if (strokeStart) return;
+
         LineRenderer lr = temp.AddComponent<LineRenderer>();
         int tempIndex = spheres.Count - 1;
         lr.positionCount = 2;

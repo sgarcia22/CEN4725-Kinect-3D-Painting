@@ -19,6 +19,7 @@ public class HandStates
 /// </summary>
 public enum ProcessState
 {
+    None,
     Neutral,
     Drawing,
     Erasing,
@@ -53,17 +54,13 @@ public class GameManager : MonoBehaviour
     //Different referenced classes
     [SerializeField] private Drawing draw;
     public Erase erase;
-
     [SerializeField] private Recognizer recognizer;
 
-    [SerializeField] private float threshold;
-    [SerializeField] private int frameDelay, maxListCount;
+    [SerializeField] private int frameDelay;
 
     public ProcessState CurrentState { get; set; }
     public BodySourceView bodyView;
 
-    private LinkedList<string> handStates;     //Keep track of past 10 frames of hand states
-    private Dictionary<string, int> handCount; //Keep track of amount of hand states
     private List<Tuple<int, int>> strokesList; //Keep track of strokes
     public static List<GameObject> spheres;
 
@@ -78,10 +75,14 @@ public class GameManager : MonoBehaviour
         Neutral(); // Set initial gesture to neutral
         draw.bodyView = bodyView;
         erase.bodyView = bodyView;
-        handStates = new LinkedList<string>();
-        handCount = new Dictionary<string, int>();
         strokesList = new List<Tuple<int, int>>();
         spheres = new List<GameObject>();
+    }
+
+    private void Start()
+    {
+        frameCount = 0;
+        CurrentState = ProcessState.None;
     }
 
     void Update()
@@ -89,56 +90,55 @@ public class GameManager : MonoBehaviour
         //Get Kinect body data
         foreach (KeyValuePair<ulong, BodySourceView.BodyValue> body in bodyView.GetBodyGameObject())
         {
-            //Reset frame count if just starting 
-            if (handCount.Count == 0) frameCount = 0;
+
+            if (CurrentState == ProcessState.None) frameCount = 0;
 
             Kinect.Body b = body.Value.body;
             recognizer.Recognize(b);
+
+            //Change color of line renderer
             if (recognizer.checkClear()) clearCanvas();
             draw.ChangeColor(recognizer.getColor());
 
             string rightHandState = recognizer.getRightHandGesture();
+
             if (rightHandState == "Unknown" || rightHandState == "NotTracked") rightHandState = "Neutral";
 
-            if (handStates.Count > maxListCount)
-            {
-                handCount[handStates.First.Value]--;
-                handStates.RemoveFirst();
-            }
+            //Determine if a new stroke has started
+            bool strokeStart = DetermineStroke(GetState(rightHandState));
 
-            if (!handCount.ContainsKey(rightHandState)) handCount.Add(rightHandState, 0);
-            handStates.AddLast(rightHandState);
-            handCount[rightHandState]++;
-
-            DetermineGesture(body.Value.body);
+            //Call the appropriate functions
+            CallClass(body.Value.body, strokeStart);
         }
         frameCount++;
         if (frameCount > frameDelay)
             frameCount = 0;
     }
 
-    private void DetermineGesture(Kinect.Body body)
+    /// <summary>
+    /// Returns true it beginning of stroke
+    /// </summary>
+    /// <param name="state"></param>
+    /// <returns></returns>
+    private bool DetermineStroke(ProcessState state)
     {
-        Tuple<string, int> max = MaxOccurrence();
-        if (max.Item2 >= (threshold / 100) * handStates.Count)
-        {
-            ProcessState prev = CurrentState;
-            CurrentState = GetState(max.Item1);
-            bool strokeStart = false;
-            if (prev != ProcessState.Drawing && CurrentState == ProcessState.Drawing && spheres.Count > 0)
-            {
-                startingStrokeIndex = spheres.Count - 1;
-                strokeStart = true;
-            }
-            if (prev == ProcessState.Drawing && CurrentState != prev)
-            {
-                Tuple<int, int> tempStroke = Tuple.Create(startingStrokeIndex, spheres.Count - 1);
-                strokesList.Add(tempStroke);
+        //Set previous and current states
+        ProcessState prev = CurrentState;
+        CurrentState = state;
 
-                frameCount = 0;
-            }
-            CallClass(body, strokeStart);
+        bool strokeStart = false;
+        if (prev != ProcessState.Drawing && CurrentState == ProcessState.Drawing && spheres.Count > 0)
+        {
+            startingStrokeIndex = spheres.Count - 1;
+            strokeStart = true;
         }
+        if (prev == ProcessState.Drawing && CurrentState != prev)
+        {
+            Tuple<int, int> tempStroke = Tuple.Create(startingStrokeIndex, spheres.Count - 1);
+            strokesList.Add(tempStroke);
+            frameCount = 0;
+        }
+        return strokeStart;
     }
 
     private void clearCanvas()
@@ -148,27 +148,6 @@ public class GameManager : MonoBehaviour
         {
             erase.Eraser(i);
         }
-    }
-
-    /// <summary>
-    /// Determine maximum occurance
-    /// </summary>
-    /// <returns>Maximum occurance of hand state in Dictionary</returns>
-    private Tuple<string, int> MaxOccurrence()
-    {
-        string maxState = "";
-        int maxCount = 0;
-
-        foreach (KeyValuePair<string, int> entry in handCount)
-        {
-            if (entry.Value > maxCount)
-            {
-                maxState = entry.Key;
-                maxCount = entry.Value;
-            }
-        }
-
-        return Tuple.Create(maxState, maxCount);
     }
 
     /// <summary>
@@ -205,7 +184,7 @@ public class GameManager : MonoBehaviour
             case ProcessState.Neutral:
                 break;
             case ProcessState.Drawing:
-                if (frameCount == frameDelay)
+                if (frameCount >= frameDelay || strokeStart == true)
                     draw.Draw(body, strokeStart);
                 break;
             case ProcessState.Erasing:
@@ -224,6 +203,7 @@ public class GameManager : MonoBehaviour
         sphereCollidedIndex = index;
     }
 
+    private ProcessState None() { return ProcessState.None; }
     private ProcessState Neutral() { return ProcessState.Neutral; }
     private ProcessState Draw() { return ProcessState.Drawing; }
     private ProcessState Erase() { return ProcessState.Erasing; }
