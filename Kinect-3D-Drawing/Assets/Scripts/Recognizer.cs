@@ -503,6 +503,7 @@ public class Recognizer : MonoBehaviour
         }
 
         // Find the point one third of the distance from the hand joint to the hand tip joint
+        // 2.3 was chosen through testing
         Vector3 handCenterVector = Vector3.MoveTowards(handJointVector, handTipJointVector, (float)(handLength / 2.3));
 
         if (Vector3.Distance(handCenterVector, thumbJointVector) > threshold)
@@ -634,7 +635,7 @@ public class Recognizer : MonoBehaviour
 
         string handDirection = "other";
 
-        // Find string for hand direction RELATIVE TO THE KINECT
+        // Find string for hand direction
         if(Vector3.Angle(handToTipVector, Vector3.left) < 60.0)
         {
             handDirection = "left";
@@ -673,7 +674,7 @@ public class Recognizer : MonoBehaviour
 
         string extendedThumbElevation = "other";
 
-        // Find string for hand direction RELATIVE TO THE KINECT
+        // Find string for hand direction
         if (Vector3.Angle(handToThumbVector, Vector3.up) < 60.0)
         {
             extendedThumbElevation = "up";
@@ -795,7 +796,6 @@ public class Recognizer : MonoBehaviour
         string side;
         bool thumbExtended;
         bool handTipOpen;
-        double[] palmPitchRollYaw = new double[3];
 
         // Add newest values to leftPattern
         side = "left";
@@ -931,7 +931,7 @@ public class Recognizer : MonoBehaviour
         handLengthArrIndex++;
 
         // If the whole array has been iterated through, recalculate the average length
-        if(handLengthArrIndex > 99)
+        if(handLengthArrIndex > (handLengthArrSize - 1))
         {
             double sumOfSamples = 0;
             foreach(double sampleLength in handLengthArr)

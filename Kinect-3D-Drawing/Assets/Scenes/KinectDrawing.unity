@@ -573,7 +573,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &389162497
 RectTransform:
   m_ObjectHideFlags: 0
@@ -680,7 +680,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &679902967
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1359,6 +1359,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bodyview: {fileID: 112136120}
   handLength: 0
+  handLengthArrIndex: 0
+  handLengthArr: []
+  handLengthArrSize: 0
   clearButton: {fileID: 83853679}
   clearBar: {fileID: 1208025309}
   mainCamera: {fileID: 1747301864}
@@ -1389,7 +1392,6 @@ MonoBehaviour:
   clearCount: 0
   clearThreshold: 0
   colorButtonThreshold: 0
-  lengthCount: 0
 --- !u!1 &1657387971
 GameObject:
   m_ObjectHideFlags: 0
