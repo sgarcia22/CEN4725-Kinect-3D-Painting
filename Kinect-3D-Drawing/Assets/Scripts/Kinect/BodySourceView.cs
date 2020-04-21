@@ -126,12 +126,14 @@ public class BodySourceView : MonoBehaviour
                 box.size = new Vector3(2.5f, 2.5f, 2.5f);
             }
 
-            LineRenderer lr = jointObj.AddComponent<LineRenderer>();
+            jointObj.GetComponent<MeshRenderer>().enabled = false;
+
+            /*LineRenderer lr = jointObj.AddComponent<LineRenderer>();
 
             lr.positionCount = 2;
             lr.material = BoneMaterial;
             lr.startWidth = .05f;
-            lr.endWidth = .05f;
+            lr.endWidth = .05f;*/
 
             jointObj.transform.localScale = new Vector3(0.3f, 0.3f, 0.3f);
             jointObj.name = jt.ToString();
@@ -156,7 +158,7 @@ public class BodySourceView : MonoBehaviour
             Transform jointObj = bodyObject.transform.Find(jt.ToString());
             jointObj.localPosition = GetVector3FromJoint(sourceJoint);
 
-            LineRenderer lr = jointObj.GetComponent<LineRenderer>();
+            /*LineRenderer lr = jointObj.GetComponent<LineRenderer>();
             if (targetJoint.HasValue)
             {
                 lr.SetPosition(0, jointObj.localPosition);
@@ -168,7 +170,7 @@ public class BodySourceView : MonoBehaviour
             else
             {
                 lr.enabled = false;
-            }
+            }*/
         }
     }
 

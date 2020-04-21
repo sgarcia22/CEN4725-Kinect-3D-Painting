@@ -59,6 +59,7 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Rotate rotate;
     public Erase erase;
     [SerializeField] private Recognizer recognizer;
+    [SerializeField] private UserInterface UI;
 
     [SerializeField] private int frameDelay;
 
@@ -111,10 +112,19 @@ public class GameManager : MonoBehaviour
             if (rightHandState == "Unknown" || rightHandState == "NotTracked") rightHandState = "Neutral";
             if (leftHandState == "Unknown" || leftHandState == "NotTracked") leftHandState = "Neutral";
 
+            ProcessState rightPrev = CurrentStateRight;
+            ProcessState leftPrev = CurrentStateLeft;
+
             //Determine if a new stroke has started
             bool strokeStart = DetermineStroke(GetState(rightHandState));
             //Get state of left hand
             CurrentStateLeft = GetState(leftHandState);
+
+            Debug.Log(CurrentStateLeft);
+
+            //Change Sprites of Hands
+            if (rightPrev != CurrentStateRight) UI.ChangeSpriteRight(CurrentStateRight);
+            if (leftPrev != CurrentStateLeft) UI.ChangeSpriteLeft(CurrentStateLeft);
 
             //Call the appropriate functions
             CallClass(body.Value.body, strokeStart);
