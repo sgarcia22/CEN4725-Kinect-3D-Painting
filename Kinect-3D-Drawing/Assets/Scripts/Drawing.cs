@@ -72,7 +72,7 @@ public class Drawing : MonoBehaviour
     /// <param name="body">Represents the Kinect Body Data</param>
     public void Draw(Kinect.Body b, bool strokeStart)
     {
-        Kinect.Joint sourceJoint = b.Joints[Kinect.JointType.HandRight];
+        Kinect.Joint sourceJoint = b.Joints[Kinect.JointType.HandTipRight];
         GameObject temp = Instantiate(sphere, bodyView.GetVector3FromJoint(sourceJoint), Quaternion.identity);
         temp.transform.parent = parent.transform;
         temp.GetComponent<SphereController>().index = spheres.Count;
