@@ -930,15 +930,16 @@ public class Recognizer : MonoBehaviour
         handLengthArr[handLengthArrIndex] = newLength;
         handLengthArrIndex++;
 
-        // If the whole array has been iterated through, recalculate the average length
+        double sumOfSamples = 0;
+        foreach (double sampleLength in handLengthArr)
+        {
+            sumOfSamples = sumOfSamples + sampleLength;
+        }
+        handLength = sumOfSamples / ((double)handLengthArrSize);
+
+        // If the whole array has been iterated through, reset
         if (handLengthArrIndex > (handLengthArrSize - 1))
         {
-            double sumOfSamples = 0;
-            foreach (double sampleLength in handLengthArr)
-            {
-                sumOfSamples = sumOfSamples + sampleLength;
-            }
-            handLength = sumOfSamples / ((double)handLengthArrSize);
             handLengthArrIndex = 0;
         }
 
