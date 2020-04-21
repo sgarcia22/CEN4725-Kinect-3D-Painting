@@ -7,7 +7,10 @@ using Kinect = Windows.Kinect;
 public class Recognizer : MonoBehaviour
 {
     public BodySourceView bodyview;
-    public double handLength; // Default hand length for development
+    public double handLength;
+    public int handLengthArrIndex;
+    public double[] handLengthArr;
+    public int handLengthArrSize;
     public RawImage clearButton;
     public Scrollbar clearBar;
     public Camera mainCamera;
@@ -114,7 +117,7 @@ public class Recognizer : MonoBehaviour
                 }
 
                 // Check if extended thumb is extended the correct way
-                if(extendedThumbElevation != "irrelevant" && extendedThumbElevation != shape.extendedThumbElevation)
+                if (extendedThumbElevation != "irrelevant" && extendedThumbElevation != shape.extendedThumbElevation)
                 {
                     continue;
                 }
@@ -169,9 +172,6 @@ public class Recognizer : MonoBehaviour
     public UnitGesture Redo0;
     public UnitGesture Redo1;
 
-    // Used to measure average hand distances to determine appropriate ratios
-    public double lengthCount;
-
     void Awake()
     {
         // Initialize most global variables
@@ -194,7 +194,14 @@ public class Recognizer : MonoBehaviour
         cycle = -1;                             // Start with cycle -1 since the cycle count increments in the beginning
 
         handLength = 0.8215; // Default hand length for development
-        lengthCount = 1;
+        handLengthArrIndex = 0;
+        handLengthArrSize = 100;    // The quantity of hand length samples in handLengthArr
+        handLengthArr = new double[handLengthArrSize];
+
+        for (int i = 0; i < handLengthArr.Length; i++)
+        {
+            handLengthArr[i] = handLength; // Initialize each sample
+        }
 
         clearTriggered = false;
         clearThreshold = 3.0;
@@ -326,19 +333,19 @@ public class Recognizer : MonoBehaviour
         allCGestures[7] = ZoomOut;
 
         // Select gesture (non-dominant)
-        gestureName = "Select";                                         
-        dominant = false;                                               
-        triggerGesture = new UnitGesture();                             
-        triggerGesture.name = gestureName;                              
+        gestureName = "Select";
+        dominant = false;
+        triggerGesture = new UnitGesture();
+        triggerGesture.name = gestureName;
         triggerGesture.thumbExtended = 1;                               // The thumb must be open
         triggerGesture.handTipOpen = 1;                                 // The hand tip must be open
         triggerGesture.palmOrientation = "irrelevant";                  // Palm orientation is not relevant to this gesture
         triggerGesture.extendedThumbElevation = "irrelevant";           // Thumb is not extended, so irrelevant
-        ContinuousGesture Select = new ContinuousGesture();             
-        Select.gestureName = gestureName;                               
-        Select.dominant = dominant;                                     
-        Select.triggerGesture = triggerGesture;                          
-        allCGestures[8] = Select;                                       
+        ContinuousGesture Select = new ContinuousGesture();
+        Select.gestureName = gestureName;
+        Select.dominant = dominant;
+        Select.triggerGesture = triggerGesture;
+        allCGestures[8] = Select;
 
         // Initialize all DiscreteGesture objects within allDGestures
 
@@ -360,7 +367,7 @@ public class Recognizer : MonoBehaviour
         Undo.triggeredRecently = false;                                 // Not timed out
         Undo.gestureSeries = new UnitGesture[2];                        // Indicate that this discrete gesture has 3 steps
         stepGesture = new UnitGesture();                                // Create first UnitGesture in this discrete gesture's series
-        
+
         stepGesture.name = "Undo0";                                     // Indicate that this is step 0 for "Undo"
         stepGesture.thumbExtended = 1;                                  // For step 0, the thumb must be extended
         stepGesture.handTipOpen = 0;                                    // For step 0, the hand tip must be closed
@@ -496,6 +503,7 @@ public class Recognizer : MonoBehaviour
         }
 
         // Find the point one third of the distance from the hand joint to the hand tip joint
+        // 2.3 was chosen through testing
         Vector3 handCenterVector = Vector3.MoveTowards(handJointVector, handTipJointVector, (float)(handLength / 2.3));
 
         if (Vector3.Distance(handCenterVector, thumbJointVector) > threshold)
@@ -627,12 +635,12 @@ public class Recognizer : MonoBehaviour
 
         string handDirection = "other";
 
-        // Find string for hand direction RELATIVE TO THE KINECT
-        if(Vector3.Angle(handToTipVector, Vector3.left) < 60.0)
+        // Find string for hand direction
+        if (Vector3.Angle(handToTipVector, Vector3.left) < 60.0)
         {
             handDirection = "left";
         }
-        if(Vector3.Angle(handToTipVector, Vector3.right) < 60.0)
+        if (Vector3.Angle(handToTipVector, Vector3.right) < 60.0)
         {
             handDirection = "right";
         }
@@ -666,7 +674,7 @@ public class Recognizer : MonoBehaviour
 
         string extendedThumbElevation = "other";
 
-        // Find string for hand direction RELATIVE TO THE KINECT
+        // Find string for hand direction
         if (Vector3.Angle(handToThumbVector, Vector3.up) < 60.0)
         {
             extendedThumbElevation = "up";
@@ -689,7 +697,7 @@ public class Recognizer : MonoBehaviour
 
     public string getLeftHandGesture()
     {
-        if(userDominantHandSide == "right")
+        if (userDominantHandSide == "right")
         {
             return currentNonDominantGesture;
         }
@@ -701,7 +709,7 @@ public class Recognizer : MonoBehaviour
 
     public string getRightHandGesture()
     {
-        if(userDominantHandSide == "right")
+        if (userDominantHandSide == "right")
         {
             return currentDominantGesture;
         }
@@ -738,7 +746,7 @@ public class Recognizer : MonoBehaviour
     // Returns true if the user's hand is hovering over a RawImage button
     public bool checkIfOverRawImage(Kinect.Body b, RawImage button, double angleThreshold)
     {
-        if(!currentNonDominantGesture.Equals("Select"))
+        if (!currentNonDominantGesture.Equals("Select"))
         {
             return false;
         }
@@ -752,7 +760,7 @@ public class Recognizer : MonoBehaviour
         Vector3 cameraToButtonVector = buttonPosition - cameraPosition;
 
 
-        if(Vector3.Angle(handToButtonVector, cameraToButtonVector) < angleThreshold)
+        if (Vector3.Angle(handToButtonVector, cameraToButtonVector) < angleThreshold)
         {
             return true;
         }
@@ -765,7 +773,7 @@ public class Recognizer : MonoBehaviour
     // Returns true if a clear canvas signal should be triggered
     public bool checkClear()
     {
-        if(clearTriggered)
+        if (clearTriggered)
         {
             clearTriggered = false;
             clearCount = 0;
@@ -788,7 +796,6 @@ public class Recognizer : MonoBehaviour
         string side;
         bool thumbExtended;
         bool handTipOpen;
-        double[] palmPitchRollYaw = new double[3];
 
         // Add newest values to leftPattern
         side = "left";
@@ -820,7 +827,7 @@ public class Recognizer : MonoBehaviour
 
         leftShape.palmOrientation = getPalmOrientation(b, side);
 
-        if(leftShape.thumbExtended == 1)
+        if (leftShape.thumbExtended == 1)
         {
             leftShape.extendedThumbElevation = getExtendedThumbElevation(b, side);
         }
@@ -886,12 +893,12 @@ public class Recognizer : MonoBehaviour
         cycle++;
         triggeredDiscreteGesture = -1;
 
-        if(cycle >= 1000)
+        if (cycle >= 1000)
         {
             cycle = 0;
-            for(int i = 0; i < allDGestures.Length; i++)
+            for (int i = 0; i < allDGestures.Length; i++)
             {
-                if(allDGestures[i].triggeredRecently)
+                if (allDGestures[i].triggeredRecently)
                 {
                     allDGestures[i].triggeredRecently = false;
                 }
@@ -915,30 +922,33 @@ public class Recognizer : MonoBehaviour
         double newLength = Vector3.Distance(handJointVector, handTipJointVector);
 
         // Adjust newLength depending on Kinect-detected hand state
-        if(b.HandRightState.ToString() == "Closed")
+        if (b.HandRightState.ToString() == "Closed")
         {
-            newLength = newLength / 0.6814; // Experimentally-determined value
+            newLength = newLength / 0.73; // Experimentally-determined value
         }
 
-        // Update hand length estimate
-        double undividedSum = handLength * lengthCount;  // Multiply handLength by lengthCount to find the value of the previous sum before division
-        undividedSum = undividedSum + newLength;         // Add new distance to undivided sum
-        handLength = undividedSum / (lengthCount + 1);   // Divide by new count to get average
-        
-        // There's a cap to how large lengthCount can get,
-        // preventing subsequent hand size estimates from having too little weight
-        if(lengthCount < 4999)
+        handLengthArr[handLengthArrIndex] = newLength;
+        handLengthArrIndex++;
+
+        // If the whole array has been iterated through, recalculate the average length
+        if (handLengthArrIndex > (handLengthArrSize - 1))
         {
-            lengthCount++;
+            double sumOfSamples = 0;
+            foreach (double sampleLength in handLengthArr)
+            {
+                sumOfSamples = sumOfSamples + sampleLength;
+            }
+            handLength = sumOfSamples / ((double)handLengthArrSize);
+            handLengthArrIndex = 0;
         }
 
         // Button check
-        if(checkIfOverRawImage(b, clearButton, clearThreshold))
+        if (checkIfOverRawImage(b, clearButton, clearThreshold))
         {
             clearCount++;
-            clearBar.size = (float)((float)clearCount / 150.0);
+            clearBar.size = (float)((float)clearCount / 100.0);
             clearBar.gameObject.SetActive(true);
-            if(clearCount > 149)
+            if (clearCount > 99)
             {
                 clearTriggered = true;
             }
@@ -970,7 +980,7 @@ public class Recognizer : MonoBehaviour
             currentColor = "Green";
             currentColorTextColor = greenMaterial.color;
         }
-        if(checkIfOverRawImage(b, blackButton, colorButtonThreshold))
+        if (checkIfOverRawImage(b, blackButton, colorButtonThreshold))
         {
             currentColor = "Black";
             currentColorTextColor = blackMaterial.color;
@@ -1019,7 +1029,7 @@ public class Recognizer : MonoBehaviour
         {
             // Determine which handPattern to check for this gesture
             HandPattern checkPattern = new HandPattern();
-            if(dg.dominant)
+            if (dg.dominant)
             {
                 checkPattern = dominantHandPattern;
             }
@@ -1030,9 +1040,9 @@ public class Recognizer : MonoBehaviour
 
             // Find the index of the first non-met step in the series
             int index = 0;
-            for(int i = 0; i < dg.gestureSeries.Length; i++)
+            for (int i = 0; i < dg.gestureSeries.Length; i++)
             {
-                if(!dg.gestureSeries[i].isMet)
+                if (!dg.gestureSeries[i].isMet)
                 {
                     index = i;
                     break;
@@ -1040,7 +1050,7 @@ public class Recognizer : MonoBehaviour
             }
 
             // If the index is 0, simply check for a match
-            if(index == 0)
+            if (index == 0)
             {
                 if (dg.gestureSeries[index].matches(checkPattern) > 15)
                 {
@@ -1051,13 +1061,13 @@ public class Recognizer : MonoBehaviour
             // If the index is greater than 0, check for a match
             // If no match, check if the pattern still matches the previous step
             // If neither, reset each step (break the chain)
-            if(index > 0)
+            if (index > 0)
             {
                 if (dg.gestureSeries[index].matches(checkPattern) > 15)
                 {
                     dg.gestureSeries[index].isMet = true;
                 }
-                else if(dg.gestureSeries[index-1].matches(checkPattern) <= 15)
+                else if (dg.gestureSeries[index - 1].matches(checkPattern) <= 15)
                 {
                     for (int i = 0; i < dg.gestureSeries.Length; i++)
                     {
@@ -1068,18 +1078,18 @@ public class Recognizer : MonoBehaviour
 
             // If all steps are met, set triggeredDiscreteGesture to the name of dg
             bool allStepsMet = true;
-            for(int i = 0; i < dg.gestureSeries.Length; i++)
+            for (int i = 0; i < dg.gestureSeries.Length; i++)
             {
-                if(!dg.gestureSeries[i].isMet)
+                if (!dg.gestureSeries[i].isMet)
                 {
                     allStepsMet = false;
                     break;
                 }
             }
-            if(allStepsMet)
+            if (allStepsMet)
             {
                 triggeredDiscreteGesture = dgIndex;
-                for(int i = 0; i < dg.gestureSeries.Length; i++)
+                for (int i = 0; i < dg.gestureSeries.Length; i++)
                 {
                     dg.gestureSeries[i].isMet = false;
                 }
@@ -1121,15 +1131,15 @@ public class Recognizer : MonoBehaviour
                 bestGestureName = cg.gestureName;
             }
         }
-        if(bestGestureScore < 33)
+        if (bestGestureScore < 33)
         {
             currentDominantGesture = "Neutral";
         }
-        else if(currentDominantGesture.Equals("Neutral"))
+        else if (currentDominantGesture.Equals("Neutral"))
         {
             currentDominantGesture = bestGestureName;
         }
-        else if(!currentDominantGesture.Equals("Neutral") && bestGestureScore > 66)
+        else if (!currentDominantGesture.Equals("Neutral") && bestGestureScore > 66)
         {
             currentDominantGesture = bestGestureName;
         }
