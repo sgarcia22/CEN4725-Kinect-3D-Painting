@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Kinect = Windows.Kinect;
-
+using Microsoft.Kinect.VisualGestureBuilder;
 /// <summary>
 ///  Possible values for Hand States
 /// </summary>
@@ -33,6 +33,13 @@ public class GameManager : MonoBehaviour
 {
 
     private static GameManager _instance;
+     VisualGestureBuilderDatabase _gestureDatabase;
+    VisualGestureBuilderFrameSource _gestureFrameSource;
+    VisualGestureBuilderFrameReader _gestureFrameReader;
+    Kinect.KinectSensor _kinect;
+    Gesture thumbs_down;
+    Gesture thumbs_up;
+    ParticleSystem _ps;
 
     public static GameManager Instance
     {
@@ -65,7 +72,7 @@ public class GameManager : MonoBehaviour
     public ProcessState CurrentStateRight { get; set; }
     public ProcessState CurrentStateLeft { get; set; }
     public BodySourceView bodyView;
-
+    public GameObject AttachedObject;
     private List<Tuple<int, int>> strokesList; //Keep track of strokes
     public static List<GameObject> spheres;
 
@@ -84,10 +91,84 @@ public class GameManager : MonoBehaviour
         spheres = new List<GameObject>();
     }
 
+    public void SetTrackingId(ulong id)
+    {
+        //Debug.Log("in tracking");
+        if (_gestureFrameReader != null)
+        {
+           
+            _gestureFrameReader.IsPaused = false;
+            _gestureFrameSource.TrackingId = id;
+           
+        }
+    }
+
     private void Start()
     {
         frameCount = 0;
         CurrentStateRight = ProcessState.None;
+
+        _kinect = Kinect.KinectSensor.GetDefault();
+
+        _gestureDatabase = VisualGestureBuilderDatabase.Create(Application.streamingAssetsPath + "/Thumbs_down.gbd");
+        _gestureFrameSource = VisualGestureBuilderFrameSource.Create(_kinect, 0);
+        
+        foreach (var gesture in _gestureDatabase.AvailableGestures)
+        {
+
+            _gestureFrameSource.AddGesture(gesture);
+
+            if (gesture.Name == "thumbs_down")
+            {
+                Debug.Log("in thumbs down.");
+                thumbs_down = gesture;
+            }
+            if (gesture.Name == "Thumbs_up")
+            {
+                //Doesn't get thumbs up
+                thumbs_up = gesture;
+            }
+        }
+
+        _gestureFrameReader = _gestureFrameSource.OpenReader();
+        _gestureFrameReader.IsPaused = true;
+        _gestureFrameReader.FrameArrived += _gestureFrameReader_FrameArrived;
+    }
+
+    void _gestureFrameReader_FrameArrived(object sender, VisualGestureBuilderFrameArrivedEventArgs e)
+    {
+        //Debug.Log("in reader.");
+        VisualGestureBuilderFrameReference frameReference = e.FrameReference;
+        using (VisualGestureBuilderFrame frame = frameReference.AcquireFrame())
+        {
+            if (frame != null && frame.DiscreteGestureResults != null)
+            {
+                Debug.Log("line 145 "+ AttachedObject);
+               /* if (AttachedObject == null)
+                    return;*/
+
+                Debug.Log("line 150");
+                DiscreteGestureResult result = null;
+                Debug.Log("line 152");
+                if (frame.DiscreteGestureResults.Count > 0)
+                {
+                    Debug.Log("line 154");
+                    result = frame.DiscreteGestureResults[thumbs_down];
+                    Debug.Log("before results ");
+                    Debug.Log("Result is " + result.Detected);
+                }
+                if (result == null)
+                    return;
+
+                if (result.Detected == true)
+                {
+                    //do the function here
+                    strokesList.RemoveAt(strokesList.Count - 1);
+                    //spheres.RemoveAt(spheres.Count - 1);
+                    Debug.Log("detected");
+                }
+            }
+        }
     }
 
     void Update()

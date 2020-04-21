@@ -7,7 +7,10 @@ public class BodySourceManager : MonoBehaviour
     private KinectSensor _Sensor;
     private BodyFrameReader _Reader;
     private Body[] _Data = null;
-    
+    private ulong _trackingId = 0;
+
+    public GameManager GestureManager;
+
     public Body[] GetData()
     {
         return _Data;
@@ -16,7 +19,7 @@ public class BodySourceManager : MonoBehaviour
     void Start () 
     {
         _Sensor = KinectSensor.GetDefault();
-
+         this.GestureManager = GameObject.FindObjectOfType(typeof(GameManager)) as GameManager;
         if (_Sensor != null)
         {
             _Reader = _Sensor.BodyFrameSource.OpenReader();
@@ -40,13 +43,32 @@ public class BodySourceManager : MonoBehaviour
                     _Data = new Body[_Sensor.BodyFrameSource.BodyCount];
                 }
                 
+                _trackingId = 0;
                 frame.GetAndRefreshBodyData(_Data);
                 
                 frame.Dispose();
                 frame = null;
+
+                foreach (var body in _Data)
+                {
+                    //Debug.Log("for loop");
+                    if (body != null && body.IsTracked)
+                    {
+                        //Debug.Log("body");
+                       
+                        if (GestureManager != null && body.TrackingId != _trackingId)
+                        {
+                            _trackingId = body.TrackingId;
+                            GestureManager.SetTrackingId(body.TrackingId);
+                        }
+                        break;
+                    }
+                }
             }
         }    
-    }
+            
+    }    
+    
     
     void OnApplicationQuit()
     {

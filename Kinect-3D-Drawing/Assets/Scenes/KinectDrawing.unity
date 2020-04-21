@@ -1297,6 +1297,7 @@ MonoBehaviour:
   recognizer: {fileID: 1212964638}
   frameDelay: 5
   bodyView: {fileID: 112136120}
+  AttachedObject: {fileID: 0}
 --- !u!4 &1212964635
 Transform:
   m_ObjectHideFlags: 0
@@ -1363,6 +1364,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   bodyview: {fileID: 112136120}
   handLength: 0
+  handLengthArrIndex: 0
+  handLengthArr: []
+  handLengthArrSize: 0
   clearButton: {fileID: 83853679}
   clearBar: {fileID: 1208025309}
   mainCamera: {fileID: 1747301864}
@@ -1393,7 +1397,6 @@ MonoBehaviour:
   clearCount: 0
   clearThreshold: 0
   colorButtonThreshold: 0
-  lengthCount: 0
 --- !u!114 &1212964639
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1521,6 +1524,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2e74aed0503c9d24290a1ae5438fddc3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  GestureManager: {fileID: 1212964634}
 --- !u!4 &1698423886
 Transform:
   m_ObjectHideFlags: 0
