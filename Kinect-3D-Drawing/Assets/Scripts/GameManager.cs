@@ -170,8 +170,8 @@ public class GameManager : MonoBehaviour
                     //do the function here
                     diff = strokesList[(strokesList.Count - 1)].Item2 - strokesList[(strokesList.Count - 1)].Item1;
                     for (int i = diff; i > 0; i--)
-                    {
-                        spheres[i].SetActive(false);
+                    {                        
+                        spheres[(spheres.Count-1)-i].SetActive(false);
                     }
                 }
                 if (resultUp.Detected == true)
@@ -181,7 +181,7 @@ public class GameManager : MonoBehaviour
                     strokeDist = strokesList[(strokesList.Count - 1)].Item2 - strokesList[(strokesList.Count - 1)].Item1;
                     for (int i = strokeDist; i > 0; i--)
                     {
-                        spheres[i].SetActive(true);
+                        spheres[(spheres.Count - 1) - i].SetActive(true);
                     }
                 }
             }
