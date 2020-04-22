@@ -28,7 +28,9 @@ public enum ProcessState
     ZoomOut,
     RotateClockwise,
     RotateCounterClockwise,
-    Select
+    Select,
+    Undo,
+    Redo
 }
 
 public class GameManager : MonoBehaviour
@@ -79,10 +81,13 @@ public class GameManager : MonoBehaviour
     private List<Tuple<int, int>> strokesList; //Keep track of strokes
     public static List<GameObject> spheres;
 
+    private Stack<Tuple<int, int>> undoStack;
+
     #region Temp
     int startingStrokeIndex;
     int? sphereCollidedIndex;
     int frameCount = 0;
+    bool undo = false, redo = false;
     #endregion Temp
 
     void Awake()
@@ -92,6 +97,7 @@ public class GameManager : MonoBehaviour
         erase.bodyView = bodyView;
         strokesList = new List<Tuple<int, int>>();
         spheres = new List<GameObject>();
+        undoStack = new Stack<Tuple<int, int>>();
     }
 
     public void SetTrackingId(ulong id)
@@ -123,11 +129,9 @@ public class GameManager : MonoBehaviour
             if (gesture.Name == "thumbs_down")
             {
                 thumbs_down = gesture;
-                Debug.Log("down");
             }
             if (gesture.Name == "thumbs_up")
             {
-                Debug.Log("up");
                 thumbs_up = gesture;
             }
         }
@@ -137,52 +141,50 @@ public class GameManager : MonoBehaviour
         _gestureFrameReader.FrameArrived += _gestureFrameReader_FrameArrived;
     }
 
+    /// <summary>
+    /// Perform Undo/Redo Functions
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="e"></param>
     void _gestureFrameReader_FrameArrived(object sender, VisualGestureBuilderFrameArrivedEventArgs e)
     {
-        //Debug.Log("in reader.");
         VisualGestureBuilderFrameReference frameReference = e.FrameReference;
         using (VisualGestureBuilderFrame frame = frameReference.AcquireFrame())
         {
             if (frame != null && frame.DiscreteGestureResults != null)
             {
-
-                /* if (AttachedObject == null)
-                     return;*/
                 DiscreteGestureResult result = null;
-                //added
                 DiscreteGestureResult resultUp = null;
 
                 if (frame.DiscreteGestureResults.Count > 0)
                 {
 
                     result = frame.DiscreteGestureResults[thumbs_down];
-                    //added
                     resultUp = frame.DiscreteGestureResults[thumbs_up];
 
                 }
-                //added 2nd if
                 if (result == null || resultUp == null)
                     return;
 
-                if (result.Detected == true)
+                //Discrete Gesture
+                if (result.Detected == true && undo == false)
                 {
-                    int diff;
-                    //do the function here
-                    diff = strokesList[(strokesList.Count - 1)].Item2 - strokesList[(strokesList.Count - 1)].Item1;
-                    for (int i = diff; i > 0; i--)
-                    {
-                        spheres[i].SetActive(false);
-                    }
+                    undo = true;
+                    Undo();
                 }
-                if (resultUp.Detected == true)
+                else if (result.Detected == false && undo == true)
                 {
-                    int strokeDist;
-                    //do the function here
-                    strokeDist = strokesList[(strokesList.Count - 1)].Item2 - strokesList[(strokesList.Count - 1)].Item1;
-                    for (int i = strokeDist; i > 0; i--)
-                    {
-                        spheres[i].SetActive(true);
-                    }
+                    undo = false;
+                }
+
+                if (resultUp.Detected == true && redo == false)
+                {
+                    redo = true;
+                    Redo();
+                }
+                else if (resultUp.Detected == false && redo == true)
+                {
+                    redo = false;
                 }
             }
         }
@@ -212,12 +214,21 @@ public class GameManager : MonoBehaviour
             ProcessState rightPrev = CurrentStateRight;
             ProcessState leftPrev = CurrentStateLeft;
 
-            //Determine if a new stroke has started
-            bool strokeStart = DetermineStroke(GetState(rightHandState));
+            bool strokeStart = false;
+
+            //Right Hand State
+            if (undo || redo)
+            {
+                CurrentStateRight = (undo) ? ProcessState.Undo : ProcessState.Redo;
+            }
+            else
+            {
+                //Determine if a new stroke has started
+                 strokeStart = DetermineStroke(GetState(rightHandState));
+            }
+
             //Get state of left hand
             CurrentStateLeft = GetState(leftHandState);
-
-            Debug.Log(CurrentStateLeft);
 
             //Change Sprites of Hands
             if (rightPrev != CurrentStateRight) UI.ChangeSpriteRight(CurrentStateRight);
@@ -229,6 +240,39 @@ public class GameManager : MonoBehaviour
         frameCount++;
         if (frameCount > frameDelay)
             frameCount = 0;
+    }
+
+    /// <summary>
+    /// Perform undo on stroke
+    /// </summary>
+    private void Undo()
+    {
+        int tempIndex = strokesList.Count - 1;
+        while (spheres[strokesList[tempIndex].Item1].activeSelf == false && tempIndex >= 0) {
+            tempIndex -= 1;
+        }
+        if (tempIndex < 0) return;
+
+        int diff = strokesList[tempIndex].Item2 - strokesList[tempIndex].Item1;
+        for (int i = diff; i > 0; i--)
+        {
+            spheres[i].SetActive(false);
+        }
+        undoStack.Push(strokesList[(strokesList.Count - 1)]);
+    }
+
+    /// <summary>
+    /// Perform redo on stroke
+    /// </summary>
+    private void Redo()
+    {
+        if (undoStack.Count == 0) return;
+        Tuple<int, int> temp = undoStack.Pop();
+        int strokeDist = temp.Item2 - temp.Item1;
+        for (int i = strokeDist; i > 0; i--)
+        {
+            spheres[i].SetActive(true);
+        }
     }
 
     /// <summary>
@@ -253,6 +297,7 @@ public class GameManager : MonoBehaviour
             Tuple<int, int> tempStroke = Tuple.Create(startingStrokeIndex, spheres.Count - 1);
             strokesList.Add(tempStroke);
             frameCount = 0;
+            if (undoStack.Count != 0) undoStack.Clear();
         }
         return strokeStart;
     }

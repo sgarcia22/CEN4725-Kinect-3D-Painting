@@ -47,6 +47,20 @@ public class UserInterface : MonoBehaviour
                     rightRend.flipX = true;
                 }
                 break;
+            case ProcessState.Undo:
+                if (rightRend.sprite != thumbsDown)
+                {
+                    rightRend.sprite = thumbsDown;
+                    rightRend.flipX = true;
+                }
+                break;
+            case ProcessState.Redo:
+                if (rightRend.sprite != thumbsUp)
+                {
+                    rightRend.sprite = thumbsUp;
+                    rightRend.flipX = true;
+                }
+                break;
         }
     }
 
