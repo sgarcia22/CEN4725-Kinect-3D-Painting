@@ -248,15 +248,21 @@ public class GameManager : MonoBehaviour
     private void Undo()
     {
         int tempIndex = strokesList.Count - 1;
+        int cnt = spheres.Count - 1;
+        int j=0;
         while (spheres[strokesList[tempIndex].Item1].activeSelf == false && tempIndex >= 0) {
             tempIndex -= 1;
         }
         if (tempIndex < 0) return;
 
         int diff = strokesList[tempIndex].Item2 - strokesList[tempIndex].Item1;
+        while(spheres[(spheres.Count - 1)].activeSelf ==false)
+        {
+            j++;
+        }
         for (int i = diff; i > 0; i--)
         {
-            spheres[i].SetActive(false);
+            spheres[cnt-i].SetActive(false);
         }
         undoStack.Push(strokesList[(strokesList.Count - 1)]);
     }
@@ -271,7 +277,7 @@ public class GameManager : MonoBehaviour
         int strokeDist = temp.Item2 - temp.Item1;
         for (int i = strokeDist; i > 0; i--)
         {
-            spheres[i].SetActive(true);
+            spheres[(spheres.Count - 1)-i].SetActive(true);
         }
     }
 
