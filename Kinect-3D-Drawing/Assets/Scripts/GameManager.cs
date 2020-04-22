@@ -120,13 +120,10 @@ public class GameManager : MonoBehaviour
 
             if (gesture.Name == "thumbs_down")
             {
-                Debug.Log("in thumbs down.");
                 thumbs_down = gesture;
             }
             if (gesture.Name == "thumbs_up")
             {
-                //Doesn't get thumbs up
-                Debug.Log("in thumb up.");
                 thumbs_up = gesture;
             }
         }
@@ -150,14 +147,19 @@ public class GameManager : MonoBehaviour
 
 
                 DiscreteGestureResult result = null;
-   
+                //added
+                DiscreteGestureResult resultUp = null;
+
                 if (frame.DiscreteGestureResults.Count > 0)
                 {
               
                     result = frame.DiscreteGestureResults[thumbs_down];
-              
+                    //added
+                    resultUp = frame.DiscreteGestureResults[thumbs_up];
+
                 }
-                if (result == null)
+                //added 2nd if
+                if (result == null || resultUp == null)
                     return;
 
                 if (result.Detected == true)
@@ -165,9 +167,19 @@ public class GameManager : MonoBehaviour
                     int diff;
                     //do the function here
                     diff = strokesList[(strokesList.Count - 1)].Item2 - strokesList[(strokesList.Count - 1)].Item1;
-                    for(int i=0; i < diff; i++)
+                    for(int i=diff; i > 0; i--)
                     {
                         spheres[i].SetActive(false);
+                    }
+                }
+                if(resultUp.Detected == true)
+                {
+                    int strokeDist;
+                    //do the function here
+                    strokeDist = strokesList[(strokesList.Count - 1)].Item2 - strokesList[(strokesList.Count - 1)].Item1;
+                    for (int i = strokeDist; i > 0; i--)
+                    {
+                        spheres[i].SetActive(true);
                     }
                 }
             }
