@@ -27,7 +27,9 @@ public enum ProcessState
     ZoomOut,
     RotateClockwise,
     RotateCounterClockwise,
-    Select
+    Select,
+    Undo,
+    Redo
 }
 
 public class GameManager : MonoBehaviour
@@ -71,10 +73,13 @@ public class GameManager : MonoBehaviour
     private List<Tuple<int, int>> strokesList; //Keep track of strokes
     public static List<GameObject> spheres;
 
+    private Stack<Tuple<int, int>> undoStack;
+
     #region Temp
     int startingStrokeIndex;
     int? sphereCollidedIndex;
     int frameCount = 0;
+    bool undo = false, redo = false;
     #endregion Temp
 
     void Awake()
@@ -109,6 +114,7 @@ public class GameManager : MonoBehaviour
 
             string rightHandState = recognizer.getRightHandGesture();
             string leftHandState = recognizer.getLeftHandGesture();
+            string discreteGesture = recognizer.checkForDiscreteGesture();
 
             if (rightHandState == "Unknown" || rightHandState == "NotTracked") rightHandState = "Neutral";
             if (leftHandState == "Unknown" || leftHandState == "NotTracked") leftHandState = "Neutral";
@@ -116,15 +122,24 @@ public class GameManager : MonoBehaviour
             ProcessState rightPrev = CurrentStateRight;
             ProcessState leftPrev = CurrentStateLeft;
 
-            //Determine if a new stroke has started
-            bool strokeStart = DetermineStroke(GetState(rightHandState));
+            bool strokeStart = false;
+
+            //Get State of Right Hand
+            if (discreteGesture != "")
+                CurrentStateRight = GetState(discreteGesture);
+            else
+                strokeStart = DetermineStroke(GetState(rightHandState));
             //Get state of left hand
             CurrentStateLeft = GetState(leftHandState);
 
-            Debug.Log(CurrentStateLeft);
-
             //Change Sprites of Hands
-            if (rightPrev != CurrentStateRight) UI.ChangeSpriteRight(CurrentStateRight);
+            if (rightPrev != CurrentStateRight)
+            {
+                UI.ChangeSpriteRight(CurrentStateRight, recognizer.checkUndoTimedOut(), recognizer.checkRedoTimedOut());
+                //Call undo/redo once upon gesture recognition
+                if (CurrentStateRight == ProcessState.Undo) UndoGesture();
+                if (CurrentStateRight == ProcessState.Redo) RedoGesture();
+            }
             if (leftPrev != CurrentStateLeft) UI.ChangeSpriteLeft(CurrentStateLeft);
 
             //Call the appropriate functions
@@ -171,6 +186,41 @@ public class GameManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Perform undo on stroke
+    /// </summary>
+    private void UndoGesture()
+    {
+        int tempIndex = strokesList.Count - 1;
+        while (spheres[strokesList[tempIndex].Item1].activeSelf == false && tempIndex >= 0)
+        {
+            tempIndex -= 1;
+        }
+        if (tempIndex < 0) return;
+
+        int diff = strokesList[tempIndex].Item2 - strokesList[tempIndex].Item1;
+        for (int i = diff; i > 0; i--)
+        {
+            spheres[i].SetActive(false);
+        }
+        undoStack.Push(strokesList[(strokesList.Count - 1)]);
+    }
+
+    /// <summary>
+    /// Perform redo on stroke
+    /// </summary>
+    private void RedoGesture()
+    {
+        if (undoStack.Count == 0) return;
+        Tuple<int, int> temp = undoStack.Pop();
+        int strokeDist = temp.Item2 - temp.Item1;
+        for (int i = strokeDist; i > 0; i--)
+        {
+            spheres[i].SetActive(true);
+        }
+    }
+
+
+    /// <summary>
     /// Change the state of the FSM
     /// </summary>
     /// <param name="state">Current State</param>
@@ -194,6 +244,10 @@ public class GameManager : MonoBehaviour
                 return RotateCounterClockwise();
             case "Select":
                 return Select();
+            case "Undo":
+                return Undo();
+            case "Redo":
+                return Redo();
             default:
                 return Neutral();
         }
@@ -247,4 +301,6 @@ public class GameManager : MonoBehaviour
     private ProcessState RotateClockwise() { return ProcessState.RotateClockwise; }
     private ProcessState RotateCounterClockwise() { return ProcessState.RotateCounterClockwise; }
     private ProcessState Select() { return ProcessState.Select; }
+    private ProcessState Undo() { return ProcessState.Undo; }
+    private ProcessState Redo() { return ProcessState.Redo; }
 }

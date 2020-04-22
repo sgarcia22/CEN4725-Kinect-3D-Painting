@@ -22,8 +22,10 @@ public class UserInterface : MonoBehaviour
     /// Change Sprite of the Right Hand
     /// </summary>
     /// <param name="state"></param>
-    public void ChangeSpriteRight(ProcessState state)
+    public void ChangeSpriteRight(ProcessState state, bool checkUndoTimedOut = false, bool checkRedoTimedOut = false)
     {
+        if (!checkUndoTimedOut || !checkRedoTimedOut) return;
+
         switch (state)
         {
             case ProcessState.Neutral:
@@ -44,6 +46,20 @@ public class UserInterface : MonoBehaviour
                 if (rightRend.sprite != erasing)
                 {
                     rightRend.sprite = erasing;
+                    rightRend.flipX = true;
+                }
+                break;
+            case ProcessState.Undo:
+                if (rightRend.sprite != thumbsDown)
+                {
+                    rightRend.sprite = thumbsDown;
+                    rightRend.flipX = true;
+                }
+                break;
+            case ProcessState.Redo:
+                if (rightRend.sprite != thumbsUp)
+                {
+                    rightRend.sprite = thumbsUp;
                     rightRend.flipX = true;
                 }
                 break;
