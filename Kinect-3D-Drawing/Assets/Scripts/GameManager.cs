@@ -26,7 +26,8 @@ public enum ProcessState
     ZoomIn,
     ZoomOut,
     RotateClockwise,
-    RotateCounterClockwise
+    RotateCounterClockwise,
+    Select
 }
 
 public class GameManager : MonoBehaviour
@@ -191,6 +192,8 @@ public class GameManager : MonoBehaviour
                 return RotateClockwise();
             case "RotateCounterClockwise":
                 return RotateCounterClockwise();
+            case "Select":
+                return Select();
             default:
                 return Neutral();
         }
@@ -243,4 +246,5 @@ public class GameManager : MonoBehaviour
     private ProcessState ZoomOut() { return ProcessState.ZoomOut; }
     private ProcessState RotateClockwise() { return ProcessState.RotateClockwise; }
     private ProcessState RotateCounterClockwise() { return ProcessState.RotateCounterClockwise; }
+    private ProcessState Select() { return ProcessState.Select; }
 }

@@ -85,6 +85,13 @@ public class UserInterface : MonoBehaviour
                     leftRend.flipX = false;
                 }
                 break;
+            case ProcessState.Select:
+                if (leftRend.sprite != erasing)
+                {
+                    leftRend.sprite = erasing;
+                    leftRend.flipX = false;
+                }
+                break;
         }
     }
 
