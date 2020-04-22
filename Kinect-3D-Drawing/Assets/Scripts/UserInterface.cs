@@ -24,7 +24,7 @@ public class UserInterface : MonoBehaviour
     /// <param name="state"></param>
     public void ChangeSpriteRight(ProcessState state, bool checkUndoTimedOut = false, bool checkRedoTimedOut = false)
     {
-        if (!checkUndoTimedOut || !checkRedoTimedOut) return;
+        if ((checkUndoTimedOut && rightRend.sprite == thumbsDown) || checkRedoTimedOut && rightRend.sprite == thumbsUp) return;
 
         switch (state)
         {

@@ -73,7 +73,7 @@ public class GameManager : MonoBehaviour
     private List<Tuple<int, int>> strokesList; //Keep track of strokes
     public static List<GameObject> spheres;
 
-    private Stack<Tuple<int, int>> undoStack;
+    private List<Tuple<int, int>> undoStack;
 
     #region Temp
     int startingStrokeIndex;
@@ -89,6 +89,7 @@ public class GameManager : MonoBehaviour
         erase.bodyView = bodyView;
         strokesList = new List<Tuple<int, int>>();
         spheres = new List<GameObject>();
+        undoStack = new List<Tuple<int, int>>();
     }
 
     private void Start()
@@ -135,6 +136,7 @@ public class GameManager : MonoBehaviour
             //Change Sprites of Hands
             if (rightPrev != CurrentStateRight)
             {
+                Debug.Log(CurrentStateRight + "Undo Timed: " + recognizer.checkUndoTimedOut() + "Redo Timed: " + recognizer.checkRedoTimedOut());
                 UI.ChangeSpriteRight(CurrentStateRight, recognizer.checkUndoTimedOut(), recognizer.checkRedoTimedOut());
                 //Call undo/redo once upon gesture recognition
                 if (CurrentStateRight == ProcessState.Undo) UndoGesture();
@@ -191,34 +193,31 @@ public class GameManager : MonoBehaviour
     private void UndoGesture()
     {
         int tempIndex = strokesList.Count - 1;
-        while (spheres[strokesList[tempIndex].Item1].activeSelf == false && tempIndex >= 0)
-        {
-            tempIndex -= 1;
-        }
+        tempIndex -= undoStack.Count;
         if (tempIndex < 0) return;
 
-        int diff = strokesList[tempIndex].Item2 - strokesList[tempIndex].Item1;
-        for (int i = diff; i > 0; i--)
+        Tuple<int, int> tempVal = strokesList[tempIndex];
+        for (int i = tempVal.Item2; i >= tempVal.Item1; i--)
         {
             spheres[i].SetActive(false);
         }
-        undoStack.Push(strokesList[(strokesList.Count - 1)]);
+        undoStack.Add(strokesList[tempIndex]);
     }
-
+     
     /// <summary>
     /// Perform redo on stroke
     /// </summary>
     private void RedoGesture()
     {
         if (undoStack.Count == 0) return;
-        Tuple<int, int> temp = undoStack.Pop();
-        int strokeDist = temp.Item2 - temp.Item1;
-        for (int i = strokeDist; i > 0; i--)
+
+        Tuple<int, int> temp = undoStack[0];
+        undoStack.RemoveAt(0);
+        for (int i = temp.Item2; i >= temp.Item1; i--)
         {
             spheres[i].SetActive(true);
         }
     }
-
 
     /// <summary>
     /// Change the state of the FSM
@@ -278,12 +277,31 @@ public class GameManager : MonoBehaviour
                 break;
             case ProcessState.Drawing:
                 if (frameCount >= frameDelay || strokeStart == true)
+                {
                     draw.Draw(body, strokeStart);
+                    if (undoStack.Count != 0) EraseSpheres();
+                }
                 break;
             case ProcessState.Erasing:
                 erase.Eraser(sphereCollidedIndex);
                 break;
         }
+    }
+
+    /// <summary>
+    /// Erase the spheres if the undo stack still has items
+    /// </summary>
+    private void EraseSpheres ()
+    {
+        foreach (Tuple<int, int> stroke in undoStack)
+        {
+            for (int i = stroke.Item2; i >= stroke.Item1; --i)
+            {
+                Destroy(spheres[i]);
+            }
+            strokesList.Remove(stroke);
+        }
+        undoStack.Clear();
     }
 
     //Body or Hand collided with sphere
