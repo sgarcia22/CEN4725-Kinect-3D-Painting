@@ -790,6 +790,18 @@ public class Recognizer : MonoBehaviour
         return currentColor;
     }
 
+    // Returns whether undo is timed out
+    public bool checkUndoTimedOut()
+    {
+        return allDGestures[0].timedOut;
+    }
+
+    // Returns whether redo is timed out
+    public bool checkRedoTimedOut()
+    {
+        return allDGestures[1].timedOut;
+    }
+
     //Check the current frame with Kinect body
     public void FrameCheck(Kinect.Body b)
     {
