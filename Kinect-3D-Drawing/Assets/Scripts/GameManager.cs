@@ -256,14 +256,21 @@ public class GameManager : MonoBehaviour
         if (tempIndex < 0) return;
 
         int diff = strokesList[tempIndex].Item2 - strokesList[tempIndex].Item1;
-        while(spheres[(spheres.Count - 1)].activeSelf ==false)
+        while(spheres[cnt].activeSelf ==false)
         {
+            if(cnt == 1)
+            {
+                break;
+            }
+            cnt--;
             j++;
+            
         }
         for (int i = diff; i > 0; i--)
         {
-            spheres[cnt-i].SetActive(false);
+            spheres[(cnt-j)-i].SetActive(false);
         }
+
         undoStack.Push(strokesList[(strokesList.Count - 1)]);
     }
 
