@@ -2,9 +2,10 @@
   "ExpandedNodes": [
     "",
     "\\Assets",
+    "\\Assets\\Scripts",
     "\\Assets\\Standard Assets",
     "\\Assets\\StreamingAssets"
   ],
-  "SelectedNode": "\\Assets\\StreamingAssets",
+  "SelectedNode": "\\Assets\\Scripts\\GameManager.cs",
   "PreviewInSolutionExplorer": false
 }

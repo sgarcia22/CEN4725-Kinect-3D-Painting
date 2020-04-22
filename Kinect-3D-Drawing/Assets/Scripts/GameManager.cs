@@ -123,9 +123,10 @@ public class GameManager : MonoBehaviour
                 Debug.Log("in thumbs down.");
                 thumbs_down = gesture;
             }
-            if (gesture.Name == "Thumbs_up")
+            if (gesture.Name == "thumbs_up")
             {
                 //Doesn't get thumbs up
+                Debug.Log("in thumb up.");
                 thumbs_up = gesture;
             }
         }
@@ -143,29 +144,31 @@ public class GameManager : MonoBehaviour
         {
             if (frame != null && frame.DiscreteGestureResults != null)
             {
-                Debug.Log("line 145 "+ AttachedObject);
+                //Debug.Log("line 145 "+ AttachedObject);
                /* if (AttachedObject == null)
                     return;*/
 
-                Debug.Log("line 150");
+
                 DiscreteGestureResult result = null;
-                Debug.Log("line 152");
+   
                 if (frame.DiscreteGestureResults.Count > 0)
                 {
-                    Debug.Log("line 154");
+              
                     result = frame.DiscreteGestureResults[thumbs_down];
-                    Debug.Log("before results ");
-                    Debug.Log("Result is " + result.Detected);
+              
                 }
                 if (result == null)
                     return;
 
                 if (result.Detected == true)
                 {
+                    int diff;
                     //do the function here
-                    strokesList.RemoveAt(strokesList.Count - 1);
-                    //spheres.RemoveAt(spheres.Count - 1);
-                    Debug.Log("detected");
+                    diff = strokesList[(strokesList.Count - 1)].Item2 - strokesList[(strokesList.Count - 1)].Item1;
+                    for(int i=0; i < diff; i++)
+                    {
+                        spheres[i].SetActive(false);
+                    }
                 }
             }
         }
