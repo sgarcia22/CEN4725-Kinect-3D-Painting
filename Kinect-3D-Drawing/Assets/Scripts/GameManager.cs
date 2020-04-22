@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Kinect = Windows.Kinect;
+using Microsoft.Kinect.VisualGestureBuilder;
 
 /// <summary>
 ///  Possible values for Hand States
@@ -34,6 +35,13 @@ public class GameManager : MonoBehaviour
 {
 
     private static GameManager _instance;
+    VisualGestureBuilderDatabase _gestureDatabase;
+    VisualGestureBuilderFrameSource _gestureFrameSource;
+    VisualGestureBuilderFrameReader _gestureFrameReader;
+    Kinect.KinectSensor _kinect;
+    Gesture thumbs_down;
+    Gesture thumbs_up;
+    ParticleSystem _ps;
 
     public static GameManager Instance
     {
@@ -67,7 +75,7 @@ public class GameManager : MonoBehaviour
     public ProcessState CurrentStateRight { get; set; }
     public ProcessState CurrentStateLeft { get; set; }
     public BodySourceView bodyView;
-
+    public GameObject AttachedObject;
     private List<Tuple<int, int>> strokesList; //Keep track of strokes
     public static List<GameObject> spheres;
 
@@ -86,10 +94,98 @@ public class GameManager : MonoBehaviour
         spheres = new List<GameObject>();
     }
 
+    public void SetTrackingId(ulong id)
+    {
+        if (_gestureFrameReader != null)
+        {
+
+            _gestureFrameReader.IsPaused = false;
+            _gestureFrameSource.TrackingId = id;
+
+        }
+    }
+
     private void Start()
     {
         frameCount = 0;
         CurrentStateRight = ProcessState.None;
+
+        _kinect = Kinect.KinectSensor.GetDefault();
+
+        _gestureDatabase = VisualGestureBuilderDatabase.Create(Application.streamingAssetsPath + "/Thumbs_down.gbd");
+        _gestureFrameSource = VisualGestureBuilderFrameSource.Create(_kinect, 0);
+
+        foreach (var gesture in _gestureDatabase.AvailableGestures)
+        {
+
+            _gestureFrameSource.AddGesture(gesture);
+
+            if (gesture.Name == "thumbs_down")
+            {
+                thumbs_down = gesture;
+                Debug.Log("down");
+            }
+            if (gesture.Name == "thumbs_up")
+            {
+                Debug.Log("up");
+                thumbs_up = gesture;
+            }
+        }
+
+        _gestureFrameReader = _gestureFrameSource.OpenReader();
+        _gestureFrameReader.IsPaused = true;
+        _gestureFrameReader.FrameArrived += _gestureFrameReader_FrameArrived;
+    }
+
+    void _gestureFrameReader_FrameArrived(object sender, VisualGestureBuilderFrameArrivedEventArgs e)
+    {
+        //Debug.Log("in reader.");
+        VisualGestureBuilderFrameReference frameReference = e.FrameReference;
+        using (VisualGestureBuilderFrame frame = frameReference.AcquireFrame())
+        {
+            if (frame != null && frame.DiscreteGestureResults != null)
+            {
+
+                /* if (AttachedObject == null)
+                     return;*/
+                DiscreteGestureResult result = null;
+                //added
+                DiscreteGestureResult resultUp = null;
+
+                if (frame.DiscreteGestureResults.Count > 0)
+                {
+
+                    result = frame.DiscreteGestureResults[thumbs_down];
+                    //added
+                    resultUp = frame.DiscreteGestureResults[thumbs_up];
+
+                }
+                //added 2nd if
+                if (result == null || resultUp == null)
+                    return;
+
+                if (result.Detected == true)
+                {
+                    int diff;
+                    //do the function here
+                    diff = strokesList[(strokesList.Count - 1)].Item2 - strokesList[(strokesList.Count - 1)].Item1;
+                    for (int i = diff; i > 0; i--)
+                    {
+                        spheres[i].SetActive(false);
+                    }
+                }
+                if (resultUp.Detected == true)
+                {
+                    int strokeDist;
+                    //do the function here
+                    strokeDist = strokesList[(strokesList.Count - 1)].Item2 - strokesList[(strokesList.Count - 1)].Item1;
+                    for (int i = strokeDist; i > 0; i--)
+                    {
+                        spheres[i].SetActive(true);
+                    }
+                }
+            }
+        }
     }
 
     void Update()
