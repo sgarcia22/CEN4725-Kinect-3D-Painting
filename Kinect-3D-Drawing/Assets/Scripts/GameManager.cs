@@ -158,7 +158,6 @@ public class GameManager : MonoBehaviour
 
                 if (frame.DiscreteGestureResults.Count > 0)
                 {
-                    Debug.Log("count " + frame.DiscreteGestureResults.Count);
                     result = frame.DiscreteGestureResults[thumbs_down];
                     resultUp = frame.DiscreteGestureResults[thumbs_up];
 
@@ -169,8 +168,12 @@ public class GameManager : MonoBehaviour
                 //Discrete Gesture
                 if (result.Detected == true && undo == false)
                 {
-                    undo = true;
-                    Undo();
+                    //Debug.Log("confidence is " + result.Confidence);
+                    if (result.Confidence > 0.08)
+                    {
+                        undo = true;
+                        Undo();
+                    }
                 }
                 else if (result.Detected == false && undo == true)
                 {
@@ -179,8 +182,12 @@ public class GameManager : MonoBehaviour
 
                 if (resultUp.Detected == true && redo == false)
                 {
-                    redo = true;
-                    Redo();
+                    //Debug.Log("confidence up is " + resultUp.Confidence);
+                    if (result.Confidence > 0.08)
+                    {
+                        redo = true;
+                        Redo();
+                    }
                 }
                 else if (resultUp.Detected == false && redo == true)
                 {
@@ -270,7 +277,7 @@ public class GameManager : MonoBehaviour
         {
             //spheres[cnt- i].SetActive(false); THIS WORKS WITH ONE UNDO AT A TIME
             spheres[(cnt)-i].SetActive(false);
-            Debug.Log("cnt is: " + cnt);
+           
         }
 
         undoStack.Push(strokesList[(strokesList.Count - 1)]);
