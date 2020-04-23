@@ -183,7 +183,7 @@ public class GameManager : MonoBehaviour
         CurrentStateRight = ProcessState.Erasing;
         for(int i = 0; i < spheres.Count; i++)
         {
-            erase.Eraser(i);
+            Destroy(spheres[i]);
         }
     }
 
