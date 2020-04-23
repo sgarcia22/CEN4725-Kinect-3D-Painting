@@ -212,13 +212,7 @@ public class Recognizer : MonoBehaviour
 
         // Initialize all ContinuousGesture objects within allCGestures
 
-        // Indeces for each gesture
-        // 0 - Neutral (dominant)
-        // 1 - Neutral (non-dominant)
-        // 2 - Draw
-        // 3 - Erase
-
-        int numCGestures = 9;
+        int numCGestures = 7;
         allCGestures = new ContinuousGesture[numCGestures];
 
         string gestureName;
@@ -276,34 +270,6 @@ public class Recognizer : MonoBehaviour
         Erase.triggerGesture = triggerGesture;                          // Assign triggerGesture to Erase 
         allCGestures[3] = Erase;                                        // Add Erase to allCGestures
 
-        // RotateClockwise (non-dominant)
-        gestureName = "RotateClockwise";
-        dominant = false;
-        triggerGesture = new UnitGesture();
-        triggerGesture.thumbExtended = 1;
-        triggerGesture.handTipOpen = 0;
-        triggerGesture.palmOrientation = "irrelevant";
-        triggerGesture.extendedThumbElevation = "left";
-        ContinuousGesture RotateClockwise = new ContinuousGesture();
-        RotateClockwise.gestureName = gestureName;
-        RotateClockwise.dominant = dominant;
-        RotateClockwise.triggerGesture = triggerGesture;
-        allCGestures[4] = RotateClockwise;
-
-        // RotateCounterClockwise (non-dominant)
-        gestureName = "RotateCounterClockwise";
-        dominant = false;
-        triggerGesture = new UnitGesture();
-        triggerGesture.thumbExtended = 1;
-        triggerGesture.handTipOpen = 0;
-        triggerGesture.palmOrientation = "irrelevant";
-        triggerGesture.extendedThumbElevation = "right";
-        ContinuousGesture RotateCounterClockwise = new ContinuousGesture();
-        RotateCounterClockwise.gestureName = gestureName;
-        RotateCounterClockwise.dominant = dominant;
-        RotateCounterClockwise.triggerGesture = triggerGesture;
-        allCGestures[5] = RotateCounterClockwise;
-
         // ZoomIn (non-dominant)
         gestureName = "ZoomIn";
         dominant = false;
@@ -316,7 +282,7 @@ public class Recognizer : MonoBehaviour
         ZoomIn.gestureName = gestureName;
         ZoomIn.dominant = dominant;
         ZoomIn.triggerGesture = triggerGesture;
-        allCGestures[6] = ZoomIn;
+        allCGestures[4] = ZoomIn;
 
         // ZoomOut (non-dominant)
         gestureName = "ZoomOut";
@@ -330,7 +296,7 @@ public class Recognizer : MonoBehaviour
         ZoomOut.gestureName = gestureName;
         ZoomOut.dominant = dominant;
         ZoomOut.triggerGesture = triggerGesture;
-        allCGestures[7] = ZoomOut;
+        allCGestures[5] = ZoomOut;
 
         // Select gesture (non-dominant)
         gestureName = "Select";
@@ -345,7 +311,7 @@ public class Recognizer : MonoBehaviour
         Select.gestureName = gestureName;
         Select.dominant = dominant;
         Select.triggerGesture = triggerGesture;
-        allCGestures[8] = Select;
+        allCGestures[6] = Select;
 
         // Initialize all DiscreteGesture objects within allDGestures
 
@@ -1113,8 +1079,8 @@ public class Recognizer : MonoBehaviour
 
         for (int i = 0; i < allCGestures.Length; i++)
         {
-            string matchNameDominant = "Neutral";
-            string matchNameNonDominant = "Neutral";
+            currentDominantGesture = "Neutral";
+            currentNonDominantGesture = "Neutral";
 
             if (allCGestures[i].dominant)
             {
@@ -1124,8 +1090,6 @@ public class Recognizer : MonoBehaviour
             {
                 allCGestures[i].score = allCGestures[i].triggerGesture.matches(nonDominantHandPattern);
             }
-            currentDominantGesture = matchNameDominant;
-            currentNonDominantGesture = matchNameNonDominant;
         }
 
         string bestGestureName = "Neutral";
