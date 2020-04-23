@@ -158,7 +158,7 @@ public class GameManager : MonoBehaviour
 
                 if (frame.DiscreteGestureResults.Count > 0)
                 {
-
+                    Debug.Log("count " + frame.DiscreteGestureResults.Count);
                     result = frame.DiscreteGestureResults[thumbs_down];
                     resultUp = frame.DiscreteGestureResults[thumbs_up];
 
@@ -263,12 +263,14 @@ public class GameManager : MonoBehaviour
                 break;
             }
             cnt--;
-            j++;
+            //j++;
             
         }
         for (int i = diff; i > 0; i--)
         {
-            spheres[(cnt-j)-i].SetActive(false);
+            //spheres[cnt- i].SetActive(false); THIS WORKS WITH ONE UNDO AT A TIME
+            spheres[(cnt)-i].SetActive(false);
+            Debug.Log("cnt is: " + cnt);
         }
 
         undoStack.Push(strokesList[(strokesList.Count - 1)]);
